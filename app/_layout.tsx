@@ -1,10 +1,16 @@
 import { Stack } from "expo-router";
-import { AuthProvider } from "../context/AuthContext";
+import { StatusBar } from "expo-status-bar";
+import { PaperProvider } from "react-native-paper";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { paperTheme } from "../src/theme/theme";
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-    </AuthProvider>
+    <PaperProvider theme={paperTheme}>
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false }} />
+      </SafeAreaProvider>
+    </PaperProvider>
   );
 }
