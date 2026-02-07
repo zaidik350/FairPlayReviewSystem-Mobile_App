@@ -1,58 +1,51 @@
 import { useRouter } from 'expo-router';
-import { Bell, ChevronRight, Settings, Shield, User } from 'lucide-react-native';
+import { Bell, Settings, Shield, User } from 'lucide-react-native';
 import React from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 
-const SettingItem = ({ icon: Icon, label, sublabel }: any) => (
-  <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-[#2D333B]">
-    <div className="flex-row items-center">
-      <View className="bg-[#1c222a] p-2 rounded-lg mr-4">
-        <Icon size={20} color="#4F7CFF" />
-      </View>
-      <View>
-        <Text className="text-[#EAEAEA] font-medium text-base">{label}</Text>
-        <Text className="text-gray-500 text-xs">{sublabel}</Text>
-      </View>
-    </div>
-    <ChevronRight size={18} color="#444" />
-  </TouchableOpacity>
+// Reusable Setting Row
+const SettingRow = ({ icon: Icon, label }: any) => (
+  <View className="flex-row items-center py-4 border-b border-gray-800">
+    <Icon size={20} color="#4F7CFF" className="mr-4" />
+    <Text className="text-white text-lg flex-1">{label}</Text>
+  </View>
 );
 
 export const SettingsScreen = () => {
   const router = useRouter();
 
   return (
-    <ScrollView className="flex-1 bg-[#0B0F14] p-6">
-      <Text className="text-white text-3xl font-bold mt-12 mb-6">Settings</Text>
+    <ScreenContainer>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Text className="text-white text-3xl font-bold mt-12 mb-6">Profile Settings</Text>
 
-      {/* Profile Section */}
-      <Card className="mb-6 flex-row items-center">
-        <View className="h-16 w-16 rounded-full bg-[#4F7CFF] items-center justify-center">
-          <Text className="text-white text-2xl font-bold">JD</Text>
-        </View>
-        <View className="ml-4">
-          <Text className="text-white text-xl font-semibold">John Doe</Text>
-          <Text className="text-gray-500 text-sm">Senior Official • ID #8829</Text>
-        </View>
-      </Card>
+        <Card className="mb-6 bg-[#161B22]/50 border-[#2D333B]">
+          <View className="items-center mb-4">
+            <View className="w-20 h-20 bg-[#4F7CFF] rounded-full items-center justify-center mb-2">
+              <Text className="text-white text-2xl font-bold">JD</Text>
+            </View>
+            <Text className="text-white text-xl font-bold">John Doe</Text>
+            <Text className="text-gray-500">Official Umpire • Grade A</Text>
+          </View>
+        </Card>
 
-      {/* General Settings */}
-      <Card className="mb-6">
-        <SettingItem icon={User} label="Personal Info" sublabel="Manage your account data" />
-        <SettingItem icon={Bell} label="Notifications" sublabel="System alerts and updates" />
-        <SettingItem icon={Shield} label="Security" sublabel="Biometrics and 2FA" />
-        <SettingItem icon={Settings} label="System Calibration" sublabel="Hardware sync settings" />
-      </Card>
+        <Card className="bg-[#161B22]/50 border-[#2D333B] mb-8">
+          <SettingRow icon={User} label="Account Information" />
+          <SettingRow icon={Bell} label="Push Notifications" />
+          <SettingRow icon={Shield} label="Privacy & Security" />
+          <SettingRow icon={Settings} label="Match Preferences" />
+        </Card>
 
-      <Button 
-        variant="destructive" 
-        title="LOGOUT SYSTEM" 
-        onPress={() => router.replace('/login')} 
-      />
-      
-      <Text className="text-center text-gray-600 text-xs mt-4">Version 1.0.4-Alpha Build</Text>
-    </ScrollView>
+        <Button 
+          variant="destructive" 
+          title="Logout" 
+          onPress={() => router.replace('/login')} 
+        />
+        <Text className="text-center text-gray-600 text-xs mt-4 pb-10">FairPlay System v1.0</Text>
+      </ScrollView>
+    </ScreenContainer>
   );
 };

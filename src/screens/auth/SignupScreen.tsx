@@ -1,91 +1,92 @@
-import { useRouter } from "expo-router";
-import { LogOut, ShieldCheck, Signal, User } from "lucide-react-native";
+import { Link, useRouter } from "expo-router";
+import { Lock, Mail, User } from "lucide-react-native";
+import { useState } from "react";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AuthHeader } from "../../components/ui/AuthHeader";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
-import { SettingsRow } from "../../components/ui/SettingsRow";
-import { colors } from "../../theme/colors";
+import { Input } from "../../components/ui/Input";
+import { authClassNames, authStyles } from "./authStyles";
 
-export default function SettingsScreen() {
+export default function SignupScreen() {
   const router = useRouter();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogout = () => {
+  const handleSignup = () => {
+    // later: signup / approval flow
     router.replace("/login");
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0B0F14" }}>
-      <View className="flex-1 px-6 py-8 justify-start relative">
+    <SafeAreaView style={authStyles.screen}>
+      <View className={authClassNames.container}>
+        <View className={authClassNames.orbPrimaryAlt} />
+        <View className={authClassNames.orbSecondaryAlt} />
 
-        {/* Ambient Background Orbs */}
-        <View className="absolute -top-32 left-0 h-48 w-48 rounded-full bg-[#2ED3C6] opacity-10" />
-        <View className="absolute -bottom-32 right-0 h-56 w-56 rounded-full bg-[#4F7CFF] opacity-15" />
+        <AuthHeader
+          badgeLabel="ACCESS REQUEST"
+          title="Create Your Access"
+          subtitle="Join the FairPlay review console"
+        />
 
-        {/* Header */}
-        <View className="mb-10">
-          <Text
-            className="text-3xl text-center"
-            style={{ color: colors.text, fontWeight: "600" }}
-          >
-            Settings
-          </Text>
-          <Text
-            className="mt-2 text-center"
-            style={{ color: colors.textMuted, fontSize: 15 }}
-          >
-            Manage your account and system preferences
-          </Text>
+        <View className={authClassNames.cardWrap}>
+          <Card className={authClassNames.card} glass intensity={55}>
+            <Input
+              label="Full name"
+              type="text"
+              value={name}
+              onChangeText={setName}
+              placeholder="Official name"
+              autoCapitalize="words"
+              icon={({ color, size }) => (
+                <User color={color} size={size} strokeWidth={1.8} />
+              )}
+            />
+
+            <Input
+              label="Email"
+              type="email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="umpire@fairplay.app"
+              icon={({ color, size }) => (
+                <Mail color={color} size={size} strokeWidth={1.8} />
+              )}
+            />
+
+            <Input
+              label="Password"
+              type="password"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Create a strong password"
+              icon={({ color, size }) => (
+                <Lock color={color} size={size} strokeWidth={1.8} />
+              )}
+            />
+
+            <Button
+              title="Request Access"
+              onPress={handleSignup}
+              containerClassName="mt-4"
+            />
+          </Card>
         </View>
 
-        {/* Profile Card */}
-        <Card className="w-full mb-6" glass intensity={55}>
-          <View className="flex-row items-center p-4">
-            <View
-              className="h-12 w-12 items-center justify-center rounded-2xl"
-              style={{
-                backgroundColor: "rgba(79,124,255,0.15)",
-                borderWidth: 1,
-                borderColor: "rgba(79,124,255,0.35)",
-              }}
-            >
-              <User color={colors.primary} size={20} strokeWidth={1.8} />
-            </View>
-            <View className="ml-4">
-              <Text className="text-sm" style={{ color: colors.textMuted }}>
-                Profile
-              </Text>
-              <Text className="text-xl" style={{ color: colors.text }}>
-                Umpire Account
-              </Text>
-              <Text className="text-sm mt-1" style={{ color: colors.textMuted }}>
-                umpire@fairplay.app
-              </Text>
-            </View>
-          </View>
-        </Card>
-
-        {/* System Settings Card */}
-        <Card className="w-full mb-6" glass intensity={55}>
-          <Text className="text-sm mb-2" style={{ color: colors.textMuted }}>
-            System
+        <View className={authClassNames.footerRow}>
+          <Text className={authClassNames.footerText} style={authStyles.footerText}>
+            Already have access?
           </Text>
-          <SettingsRow Icon={ShieldCheck} title="Review Mode" value="Live" />
-          <View className="h-px bg-[#1F2937] my-2" />
-          <SettingsRow Icon={Signal} title="Sync Status" value="Online" />
-        </Card>
-
-        {/* Logout Button */}
-        <Button
-          title="Logout"
-          variant="destructive"
-          onPress={handleLogout}
-          icon={({ color, size }) => (
-            <LogOut color={color} size={size} strokeWidth={1.8} />
-          )}
-          containerClassName="mt-4"
-        />
+          <Link href="/login" asChild>
+            <Text className={authClassNames.footerLink} style={authStyles.footerLink}>
+              Sign in
+            </Text>
+          </Link>
+        </View>
       </View>
     </SafeAreaView>
   );

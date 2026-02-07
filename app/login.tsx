@@ -1,2 +1,5 @@
-export { default } from "../src/screens/auth/LoginScreen";
+import LoginScreen from '../src/screens/auth/LoginScreen';
 
+export default function Page() {
+	return <LoginScreen />;
+}

@@ -1,132 +1,68 @@
-import { Link, useRouter } from "expo-router";
-import { Lock, Mail, Sparkles } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { Lock, Mail } from "lucide-react-native";
 import { useState } from "react";
-import { Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
+import { Image, Text, TouchableOpacity, View } from "react-native";
+import { ScreenContainer } from "../../components/common/ScreenContainer";
 import { Button } from "../../components/ui/Button";
-import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
-import { colors } from "../../theme/colors";
+import { RoleSelector } from "../../components/ui/RoleSelector";
 
-export default function LoginScreen() {
+export const LoginScreen = () => {
   const router = useRouter();
+  const [role, setRole] = useState("Umpire");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    // later: auth logic
-    router.push("/settings");
-  };
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0B0F14" }}>
-      <View className="flex-1 px-6 justify-center">
-
-        {/* Ambient Background Orbs */}
-        <View className="absolute -top-20 right-0 h-44 w-44 rounded-full bg-[#4F7CFF] opacity-15" />
-        <View className="absolute -bottom-32 -left-16 h-56 w-56 rounded-full bg-[#2ED3C6] opacity-10" />
-
-        {/* Header */}
-        <View className="mb-10 items-center">
-          <View className="flex-row items-center">
-            <View
-              className="h-11 w-11 items-center justify-center rounded-2xl"
-              style={{
-                backgroundColor: "rgba(79,124,255,0.15)",
-                borderWidth: 1,
-                borderColor: "rgba(79,124,255,0.35)",
-              }}
-            >
-              <Sparkles
-                color={colors.primary}
-                size={18}
-                strokeWidth={1.8}
-              />
-            </View>
-            <Text
-              className="ml-3 text-xs tracking-[3px]"
-              style={{ color: colors.textMuted }}
-            >
-              DRS CONSOLE
-            </Text>
+    <ScreenContainer>
+      <View className="flex-1 justify-center">
+        {/* Branding */}
+        <View className="items-center mb-10">
+          <View className="w-16 h-16 bg-white rounded-full items-center justify-center mb-4">
+            <Image
+              source={require("../../../assets/logo-icon.png")}
+              className="w-10 h-10"
+            />
           </View>
-
-          <Text
-            className="mt-6 text-3xl text-center"
-            style={{
-              color: colors.text,
-              fontWeight: "600",
-            }}
-          >
-            FairPlay Review System
-          </Text>
-
-          <Text
-            className="mt-2 text-center"
-            style={{
-              color: colors.textMuted,
-              fontSize: 15,
-            }}
-          >
-            Precision officiating intelligence
-          </Text>
+          <Text className="text-white text-3xl font-bold text-center">Cricket Fair Play</Text>
+          <Text className="text-white text-3xl font-bold text-center">Review System</Text>
         </View>
 
-        {/* Login Card */}
-        <Card className="w-full mb-6" glass intensity={55}>
-          <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="umpire@fairplay.app"
-            icon={({ color, size }) => (
-              <Mail color={color} size={size} strokeWidth={1.8} />
-            )}
-          />
+        {/* Form */}
+        <Input
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          type="email"
+          icon={({ color, size }) => (
+            <Mail color={color} size={size} strokeWidth={1.8} />
+          )}
+        />
+        <Input
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          type="password"
+          icon={({ color, size }) => (
+            <Lock color={color} size={size} strokeWidth={1.8} />
+          )}
+        />
 
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            icon={({ color, size }) => (
-              <Lock color={color} size={size} strokeWidth={1.8} />
-            )}
-          />
+        <RoleSelector selectedRole={role} onSelect={setRole} />
 
-          <Button
-            title="Enter Review Room"
-            onPress={handleLogin}
-            containerClassName="mt-4"
-          />
-        </Card>
-
-        {/* Footer */}
-        <View className="flex-row justify-center items-center">
-          <Text
-            className="text-sm"
-            style={{ color: colors.textMuted }}
-          >
-            Don’t have access?
-          </Text>
-
-          <Link href="/signup" asChild>
-            <Text
-              className="ml-1 text-sm"
-              style={{
-                color: colors.primary,
-                fontWeight: "500",
-              }}
-            >
-              Request account
-            </Text>
-          </Link>
+        <View className="mt-8">
+          <Button title="Login" onPress={() => router.replace("/settings")} />
         </View>
 
+        <TouchableOpacity
+          onPress={() => router.push("/signup")}
+          className="mt-6 items-center"
+        >
+          <Text className="text-gray-400">
+            Don't have an account? <Text className="text-white font-bold">Sign up</Text>
+          </Text>
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
-}
+};
