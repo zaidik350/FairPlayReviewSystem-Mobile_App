@@ -1,0 +1,322 @@
+import Card from '@/components/Card';
+import DecisionBadge from '@/components/DecisionBadge';
+import Colors from '@/constants/colors';
+import { useApp } from '@/context/AppContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import {
+    CheckCircle,
+    Circle,
+    Clock,
+    Crosshair,
+    Play,
+    Target,
+    XCircle,
+} from 'lucide-react-native';
+import React from 'react';
+import {
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+export default function ReviewDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const insets = useSafeAreaInsets();
+  const { getReviewById } = useApp();
+
+  const review = getReviewById(id || '');
+
+  if (!review) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Review not found</Text>
+      </View>
+    );
+  }
+
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const renderParameterRow = (
+    icon: React.ReactNode,
+    label: string,
+    value: string,
+    isPositive: boolean
+  ) => (
+    <View style={styles.parameterRow}>
+      <View style={styles.parameterLeft}>
+        <View style={styles.parameterIcon}>{icon}</View>
+        <Text style={styles.parameterLabel}>{label}</Text>
+      </View>
+      <View style={styles.parameterRight}>
+        <Text
+          style={[
+            styles.parameterValue,
+            { color: isPositive ? Colors.out : Colors.notOut },
+          ]}
+        >
+          {value}
+        </Text>
+        {isPositive ? (
+          <CheckCircle size={18} color={Colors.out} />
+        ) : (
+          <XCircle size={18} color={Colors.notOut} />
+        )}
+      </View>
+    </View>
+  );
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          title: 'Review Details',
+          headerStyle: { backgroundColor: Colors.background },
+          headerTintColor: Colors.text,
+          headerShadowVisible: false,
+        }}
+      />
+      <LinearGradient
+        colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
+        style={styles.gradient}
+      >
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: insets.bottom + 40 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <Card variant="elevated" style={styles.videoCard}>
+            <View style={styles.videoPlaceholder}>
+              <View style={styles.playButton}>
+                <Play size={32} color={Colors.text} fill={Colors.text} />
+              </View>
+              <Text style={styles.videoLabel}>Delivery Recording</Text>
+            </View>
+          </Card>
+
+          <Card variant="glass" style={styles.infoCard}>
+            <Text style={styles.matchName}>{review.matchName}</Text>
+            <View style={styles.metaRow}>
+              <View style={styles.overBadge}>
+                <Text style={styles.overLabel}>Over</Text>
+                <Text style={styles.overValue}>{review.over}</Text>
+              </View>
+              <View style={styles.timestampContainer}>
+                <Clock size={14} color={Colors.textSecondary} />
+                <Text style={styles.timestamp}>{formatDate(review.timestamp)}</Text>
+              </View>
+            </View>
+          </Card>
+
+          <Text style={styles.sectionTitle}>Decision Parameters</Text>
+
+          <Card style={styles.parametersCard}>
+            {renderParameterRow(
+              <Target size={20} color={Colors.primary} />,
+              'Impact',
+              review.impact,
+              review.impact === 'In-line'
+            )}
+            <View style={styles.divider} />
+            {renderParameterRow(
+              <Circle size={20} color={Colors.accent} />,
+              'Pitching',
+              review.pitch,
+              review.pitch === 'In-line'
+            )}
+            <View style={styles.divider} />
+            {renderParameterRow(
+              <Crosshair size={20} color={Colors.warning} />,
+              'Wickets',
+              review.wickets,
+              review.wickets === 'Hitting'
+            )}
+          </Card>
+
+          <Card variant="elevated" style={styles.decisionCard}>
+            <Text style={styles.decisionLabel}>FINAL DECISION</Text>
+            <DecisionBadge decision={review.decision} size="large" />
+            <Text style={styles.decisionExplanation}>
+              {review.decision === 'OUT'
+                ? 'All conditions met: Ball pitched in-line, impact in-line, and hitting wickets.'
+                : 'Decision overturned: One or more conditions not met for OUT.'}
+            </Text>
+          </Card>
+        </ScrollView>
+      </LinearGradient>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: 20,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.background,
+  },
+  errorText: {
+    color: Colors.text,
+    fontSize: 16,
+  },
+  videoCard: {
+    padding: 0,
+    overflow: 'hidden',
+    marginBottom: 20,
+  },
+  videoPlaceholder: {
+    height: 200,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playButton: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(0, 255, 136, 0.2)',
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  videoLabel: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  infoCard: {
+    padding: 20,
+    marginBottom: 24,
+  },
+  matchName: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 16,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  overBadge: {
+    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  overLabel: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  overValue: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: Colors.primary,
+  },
+  timestampContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  timestamp: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 16,
+  },
+  parametersCard: {
+    padding: 0,
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  parameterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  parameterLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  parameterIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  parameterLabel: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+    color: Colors.text,
+  },
+  parameterRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  parameterValue: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.cardBorder,
+    marginHorizontal: 16,
+  },
+  decisionCard: {
+    padding: 28,
+    alignItems: 'center',
+  },
+  decisionLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginBottom: 16,
+  },
+  decisionExplanation: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 20,
+    lineHeight: 20,
+    paddingHorizontal: 10,
+  },
+});
