@@ -1,0 +1,19 @@
+# NOTE: This project is JavaScript/TypeScript (Expo/React Native).
+# This file lists setup commands to install required dependencies.
+# Run each line (or copy into a shell) before `npm start`.
+
+npx expo install expo-router
+npx expo install react-native-safe-area-context
+npx expo install react-native-screens
+npx expo install expo-camera
+npx expo install expo-av
+npx expo install expo-media-library
+npm install react-native-paper
+npm install lucide-react-native
+npx expo install react-native-svg
+npx expo install expo-blur
+npx expo install @react-native-async-storage/async-storage
+npx expo install expo-haptics
+npx expo install expo-media-library
+npm install @tanstack/react-query
+npm install @nkzw/create-context-hook
