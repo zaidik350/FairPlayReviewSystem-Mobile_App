@@ -16,7 +16,7 @@ import {
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { signup } = useAuth();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -39,7 +39,7 @@ export default function SignupScreen() {
     setError('');
     
     try {
-      await login(email, password, name);
+      await signup(name, email, password);
       router.replace('/(tabs)');
     } catch (err) {
       setError('Signup failed. Please try again.');

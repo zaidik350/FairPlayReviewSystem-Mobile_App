@@ -1,13 +1,12 @@
 /**
  * NotificationContext — notification preference state.
+ * Delegates to userService which handles mock vs real API.
  */
 
+import { userService } from '@/services/user/userService';
 import { NotificationSettings } from '@/types';
 import createContextHook from '@nkzw/create-context-hook';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useState } from 'react';
-
-const STORAGE_KEY = '@cricket_drs_notifications';
 
 const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   matchAlerts: true,
@@ -18,11 +17,12 @@ const DEFAULT_NOTIFICATIONS: NotificationSettings = {
 export const [NotificationProvider, useNotificationContext] = createContextHook(() => {
   const [notifications, setNotifications] = useState<NotificationSettings>(DEFAULT_NOTIFICATIONS);
 
+  /* Load notification settings on mount */
   useEffect(() => {
     (async () => {
       try {
-        const json = await AsyncStorage.getItem(STORAGE_KEY);
-        if (json) setNotifications(JSON.parse(json));
+        const data = await userService.getNotificationSettings();
+        setNotifications(data);
       } catch (e) {
         console.log('Error loading notifications:', e);
       }
@@ -30,10 +30,9 @@ export const [NotificationProvider, useNotificationContext] = createContextHook(
   }, []);
 
   const updateNotifications = useCallback(async (updates: Partial<NotificationSettings>) => {
-    const updated = { ...notifications, ...updates };
+    const updated = await userService.updateNotificationSettings(updates);
     setNotifications(updated);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  }, [notifications]);
+  }, []);
 
   return { notifications, updateNotifications };
 });

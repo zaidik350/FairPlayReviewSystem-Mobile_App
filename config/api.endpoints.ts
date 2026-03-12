@@ -1,37 +1,43 @@
 /**
  * API Endpoints — single source of truth for all backend routes.
+ * Must match the FastAPI router prefixes in API/main_api.py
  */
 
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',
     SIGNUP: '/auth/signup',
-    LOGOUT: '/auth/logout',
-    REFRESH_TOKEN: '/auth/refresh',
     CHANGE_PASSWORD: '/auth/change-password',
+    PROFILE: '/auth/profile',
   },
-  USER: {
-    PROFILE: '/user/profile',
-    UPDATE_PROFILE: '/user/profile',
-    UPDATE_AVATAR: '/user/avatar',
-    NOTIFICATIONS: '/user/notifications',
+  PROFILE: {
+    GET: '/profile',
+    UPDATE: '/profile',
+    AVATAR: '/profile/avatar',
   },
   MATCHES: {
     LIST: '/matches',
     CREATE: '/matches',
-    DETAILS: (id: string) => `/matches/${id}`,
-    UPDATE: (id: string) => `/matches/${id}`,
-    DELETE: (id: string) => `/matches/${id}`,
+    DETAILS: (id: string | number) => `/matches/${id}`,
+    UPDATE: (id: string | number) => `/matches/${id}`,
+    DELETE: (id: string | number) => `/matches/${id}`,
   },
   REVIEWS: {
     LIST: '/reviews',
     CREATE: '/reviews',
-    DETAILS: (id: string) => `/reviews/${id}`,
-    BY_MATCH: (matchId: string) => `/reviews/match/${matchId}`,
-    ANALYZE: '/reviews/analyze',
-    UPLOAD_VIDEO: '/reviews/upload-video',
+    DETAILS: (id: string | number) => `/reviews/${id}`,
+    BY_MATCH: (matchId: string | number) => `/reviews/match/${matchId}`,
   },
-  ANALYTICS: {
-    USER_STATS: '/analytics/user',
+  DETECTION: {
+    ANALYZE_VIDEO: '/analyze-video',
+    DETECT_BALL: '/detect/ball',
+    DETECT_BATSMAN: '/detect/batsman',
+    DETECT_WICKET: '/detect/wicket',
   },
+  NOTIFICATIONS: {
+    LIST: '/notifications',
+    MARK_READ: '/notifications/read',
+    SETTINGS: '/notifications/settings',
+  },
+  HEALTH: '/health',
 } as const;

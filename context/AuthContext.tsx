@@ -1,31 +1,27 @@
 /**
- * AuthContext — user state, login, logout, updateUser.
+ * AuthContext — user state, login, signup, logout, updateUser.
+ * Delegates to authService / userService which handle mock vs real API.
  */
 
+import { authService } from '@/services/auth/authService';
+import { userService } from '@/services/user/userService';
 import { User } from '@/types';
 import createContextHook from '@nkzw/create-context-hook';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useState } from 'react';
-
-const STORAGE_KEYS = {
-  USER: '@cricket_drs_user',
-  IS_LOGGED_IN: '@cricket_drs_logged_in',
-};
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  /* Restore session on mount */
   useEffect(() => {
     (async () => {
       try {
-        const [storedUser, storedLoggedIn] = await Promise.all([
-          AsyncStorage.getItem(STORAGE_KEYS.USER),
-          AsyncStorage.getItem(STORAGE_KEYS.IS_LOGGED_IN),
-        ]);
-        if (storedUser) setUser(JSON.parse(storedUser));
-        if (storedLoggedIn) setIsLoggedIn(JSON.parse(storedLoggedIn));
+        const storedUser = await authService.getCurrentUser();
+        const authenticated = await authService.isAuthenticated();
+        if (storedUser) setUser(storedUser);
+        setIsLoggedIn(authenticated);
       } catch (e) {
         console.log('Error loading auth data:', e);
       } finally {
@@ -34,31 +30,32 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     })();
   }, []);
 
-  const login = useCallback(async (email: string, password: string, name?: string) => {
-    const newUser: User = { id: Date.now().toString(), name: name || email.split('@')[0], email };
-    setUser(newUser);
+  const login = useCallback(async (email: string, password: string) => {
+    const { user: u } = await authService.login({ email, password });
+    setUser(u);
     setIsLoggedIn(true);
-    await Promise.all([
-      AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(newUser)),
-      AsyncStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, JSON.stringify(true)),
-    ]);
+  }, []);
+
+  const signup = useCallback(async (name: string, email: string, password: string) => {
+    const { user: u } = await authService.signup({ name, email, password });
+    setUser(u);
+    setIsLoggedIn(true);
   }, []);
 
   const logout = useCallback(async () => {
+    await authService.logout();
     setUser(null);
     setIsLoggedIn(false);
-    await Promise.all([
-      AsyncStorage.removeItem(STORAGE_KEYS.USER),
-      AsyncStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, JSON.stringify(false)),
-    ]);
   }, []);
 
   const updateUser = useCallback(async (updates: Partial<User>) => {
-    if (!user) return;
-    const updated = { ...user, ...updates };
+    const updated = await userService.updateProfile(updates);
     setUser(updated);
-    await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
-  }, [user]);
+  }, []);
 
-  return { user, isLoggedIn, isLoading, login, logout, updateUser };
+  const changePassword = useCallback(async (oldPassword: string, newPassword: string) => {
+    await authService.changePassword({ old_password: oldPassword, new_password: newPassword });
+  }, []);
+
+  return { user, isLoggedIn, isLoading, login, signup, logout, updateUser, changePassword };
 });

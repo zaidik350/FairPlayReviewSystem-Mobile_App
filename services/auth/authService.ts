@@ -1,62 +1,70 @@
 /**
  * Auth Service — login / signup / logout / changePassword.
- * Falls back to mock logic when USE_REAL_API is false.
+ * Uses Supabase directly for authentication.
  */
 
-import { API_ENDPOINTS } from '@/config/api.endpoints';
-import { API_CONFIG, STORAGE_KEYS } from '@/config/env';
-import { apiClient } from '@/services/api/apiClient';
+import { STORAGE_KEYS } from '@/config/env';
+import { supabase } from '@/config/supabase';
 import type { User } from '@/types';
-import type { AuthResponse, ChangePasswordRequest, LoginRequest, SignupRequest } from '@/types/api.types';
+import type { ChangePasswordRequest, LoginRequest, SignupRequest } from '@/types/api.types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class AuthService {
   async login(creds: LoginRequest): Promise<{ user: User }> {
-    if (API_CONFIG.USE_REAL_API) {
-      const res = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, creds);
-      await apiClient.setToken(res.data.tokens.accessToken);
-      await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, res.data.tokens.refreshToken);
-      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(res.data.user));
-      return { user: res.data.user };
-    }
-    // Mock
-    const user: User = { id: Date.now().toString(), name: creds.email.split('@')[0], email: creds.email };
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: creds.email,
+      password: creds.password,
+    });
+
+    if (error) throw new Error(error.message);
+    if (!data.user) throw new Error('Login failed');
+
+    const user: User = {
+      id: data.user.id,
+      name: data.user.user_metadata?.name || creds.email.split('@')[0],
+      email: data.user.email!,
+      avatar: data.user.user_metadata?.avatar,
+    };
+
     await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
     await AsyncStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, JSON.stringify(true));
     return { user };
   }
 
   async signup(data: SignupRequest): Promise<{ user: User }> {
-    if (API_CONFIG.USE_REAL_API) {
-      const res = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGNUP, data);
-      await apiClient.setToken(res.data.tokens.accessToken);
-      await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, res.data.tokens.refreshToken);
-      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(res.data.user));
-      return { user: res.data.user };
-    }
-    // Mock — reuses login path
-    const user: User = { id: Date.now().toString(), name: data.name, email: data.email };
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: { name: data.name },
+      },
+    });
+
+    if (error) throw new Error(error.message);
+    if (!authData.user) throw new Error('Signup failed');
+
+    const user: User = {
+      id: authData.user.id,
+      name: data.name,
+      email: authData.user.email!,
+    };
+
     await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
     await AsyncStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, JSON.stringify(true));
     return { user };
   }
 
   async logout(): Promise<void> {
-    if (API_CONFIG.USE_REAL_API) {
-      try { await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT); } catch { /* best-effort */ }
-    }
-    await apiClient.clearTokens();
+    await supabase.auth.signOut();
     await AsyncStorage.removeItem(STORAGE_KEYS.USER);
     await AsyncStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, JSON.stringify(false));
   }
 
   async changePassword(data: ChangePasswordRequest): Promise<void> {
-    if (API_CONFIG.USE_REAL_API) {
-      await apiClient.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, data);
-      return;
-    }
-    // Mock — simulate network delay
-    await new Promise(r => setTimeout(r, 800));
+    const { error } = await supabase.auth.updateUser({
+      password: data.new_password,
+    });
+    if (error) throw new Error(error.message);
   }
 
   async getCurrentUser(): Promise<User | null> {
@@ -65,9 +73,8 @@ class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    if (API_CONFIG.USE_REAL_API) return !!(await apiClient.getToken());
-    const v = await AsyncStorage.getItem(STORAGE_KEYS.IS_LOGGED_IN);
-    return v ? JSON.parse(v) : false;
+    const { data } = await supabase.auth.getSession();
+    return !!data.session;
   }
 }
 

@@ -1,21 +1,22 @@
 /**
  * API request / response type definitions.
- * Keep these in sync with your backend DTOs.
+ * Keep these in sync with the FastAPI backend DTOs.
  */
 
-import type { DecisionType, ImpactType, Match, PitchType, User, WicketsType } from './index';
+import type { DecisionType, ImpactType, PitchType, WicketsType } from './index';
 
-/* ── Generic wrappers ── */
+/* ── Generic wrapper — matches backend response_formatter ── */
 
 export interface ApiResponse<T = unknown> {
-  success: boolean;
+  status: 'success' | 'error';
   data: T;
   message?: string;
 }
 
 export interface ApiError {
-  success: false;
-  error: { code: string; message: string; details?: unknown };
+  status: 'error';
+  data: null;
+  message: string;
 }
 
 /* ── Auth ── */
@@ -31,23 +32,24 @@ export interface SignupRequest {
   password: string;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-}
-
-export interface AuthResponse {
-  user: User;
-  tokens: AuthTokens;
+/** Backend returns user + token on both login and signup */
+export interface AuthResponseData {
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    avatar: string | null;
+  };
+  access_token: string;
+  token_type: string;
 }
 
 export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
+  old_password: string;
+  new_password: string;
 }
 
-/* ── User ── */
+/* ── User / Profile ── */
 
 export interface UpdateProfileRequest {
   name?: string;
@@ -55,14 +57,24 @@ export interface UpdateProfileRequest {
   avatar?: string;
 }
 
-/* ── Matches ── */
+/* ── Matches (snake_case from backend) ── */
+
+export interface ApiMatch {
+  id: number;
+  name: string;
+  teams: string;
+  venue: string;
+  date: string;
+  status: string;
+  created_at?: string;
+}
 
 export interface CreateMatchRequest {
   name: string;
   teams: string;
   venue: string;
   date: string;
-  status?: Match['status'];
+  status?: string;
 }
 
 export interface UpdateMatchRequest {
@@ -70,22 +82,40 @@ export interface UpdateMatchRequest {
   teams?: string;
   venue?: string;
   date?: string;
-  status?: Match['status'];
+  status?: string;
 }
 
-/* ── Reviews ── */
+/* ── Reviews (snake_case from backend) ── */
+
+export interface ApiReview {
+  id: number;
+  match_id: number;
+  match_name: string;
+  user_id?: number;
+  over: string;
+  original_decision: string;
+  decision: string;
+  impact: string;
+  pitch: string;
+  wickets: string;
+  video_uri?: string;
+  created_at?: string;
+}
 
 export interface CreateReviewRequest {
-  matchId: string;
-  matchName: string;
+  match_id: number;
+  match_name: string;
+  user_id?: number;
   over: string;
-  originalDecision: DecisionType;
-  decision: DecisionType;
-  impact: ImpactType;
-  pitch: PitchType;
-  wickets: WicketsType;
-  videoUri?: string;
+  original_decision: string;
+  decision: string;
+  impact: string;
+  pitch: string;
+  wickets: string;
+  video_uri?: string;
 }
+
+/* ── Detection / DRS Analysis ── */
 
 export interface AnalyzeVideoResponse {
   impact: ImpactType;
@@ -93,4 +123,14 @@ export interface AnalyzeVideoResponse {
   wickets: WicketsType;
   decision: DecisionType;
   confidence: number;
+}
+
+/* ── Notification Settings (snake_case from backend) ── */
+
+export interface ApiNotificationSettings {
+  id?: number;
+  user_id: number;
+  match_alerts: boolean;
+  review_updates: boolean;
+  system_notifications: boolean;
 }

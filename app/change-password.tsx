@@ -17,7 +17,7 @@ import {
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
-  const { updateUser } = useAuth();
+  const { changePassword } = useAuth();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -49,8 +49,7 @@ export default function ChangePasswordScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await updateUser({ password: newPassword });
+      await changePassword(currentPassword, newPassword);
       
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert('Success', 'Password changed successfully!', [

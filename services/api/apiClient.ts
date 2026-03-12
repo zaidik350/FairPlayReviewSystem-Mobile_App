@@ -3,15 +3,24 @@
  *
  * Automatically attaches Bearer tokens, handles JSON, and provides
  * typed convenience methods (get / post / put / patch / delete / upload).
+ *
+ * The backend returns { status: "success"|"error", data: T, message: string }.
+ * This client normalises errors and always resolves with ApiResponse<T>.
  */
 
 import { API_CONFIG, STORAGE_KEYS } from '@/config/env';
 import type { ApiResponse } from '@/types/api.types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 class ApiClient {
-  private baseURL = API_CONFIG.BASE_URL;
   private timeout = API_CONFIG.TIMEOUT;
+
+  /** Resolve base URL — web uses localhost, native uses 10.0.2.2 (Android) */
+  private get baseURL(): string {
+    if (Platform.OS === 'web') return API_CONFIG.WEB_URL;
+    return API_CONFIG.BASE_URL;
+  }
 
   /* ── Token helpers ── */
 
@@ -51,13 +60,13 @@ class ApiClient {
         await this.clearTokens();
       }
 
-      const json = await res.json().catch(() => ({ success: !res.ok, data: null }));
-      if (!res.ok) throw json;
+      const json = await res.json().catch(() => ({ status: 'error', data: null, message: 'Invalid JSON response' }));
+      if (!res.ok) throw { status: 'error', data: null, message: json?.message || json?.detail || `HTTP ${res.status}` };
       return json as ApiResponse<T>;
     } catch (err: any) {
       clearTimeout(timer);
       if (err.name === 'AbortError') {
-        throw { success: false, error: { code: 'TIMEOUT', message: 'Request timed out' } };
+        throw { status: 'error', data: null, message: 'Request timed out' };
       }
       throw err;
     }
@@ -94,11 +103,9 @@ class ApiClient {
 
     const res = await fetch(url, { method: 'POST', headers, body: formData });
     const json = await res.json();
-    if (!res.ok) throw json;
+    if (!res.ok) throw { status: 'error', data: null, message: json?.message || json?.detail || `HTTP ${res.status}` };
     return json as ApiResponse<T>;
   }
-
-  setBaseURL(url: string) { this.baseURL = url; }
 }
 
 export const apiClient = new ApiClient();

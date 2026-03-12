@@ -9,10 +9,12 @@ const isDevelopment = __DEV__;
 
 export const API_CONFIG = {
   BASE_URL: isDevelopment
-    ? 'http://localhost:3000/api'
+    ? 'http://10.0.2.2:8000/api'   // Android emulator → host machine
     : 'https://api.fairplayreview.com/api',
+  /** Use http://localhost:8000/api for web, http://10.0.2.2:8000/api for Android emulator */
+  WEB_URL: 'http://localhost:8000/api',
   TIMEOUT: 30000,
-  /** Set to true when your backend is ready */
+  /** Set to true to use the real FastAPI backend */
   USE_REAL_API: false,
 };
 
