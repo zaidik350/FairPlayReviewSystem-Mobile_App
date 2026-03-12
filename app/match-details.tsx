@@ -1,26 +1,26 @@
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import ReviewCard from '@/components/ReviewCard';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
+import { useMatchContext } from '@/context/MatchContext';
+import { useReviewContext } from '@/context/ReviewContext';
 import type { Review } from '@/types';
-import { LinearGradient } from 'expo-linear-gradient';
+import { getStatusColor } from '@/utils/matchHelpers';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Calendar, MapPin, Play, Users } from 'lucide-react-native';
 import React from 'react';
 import {
-    ScrollView,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function MatchDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { getMatchById, getReviewsByMatch, updateMatch } = useApp();
+  const { getMatchById, updateMatch } = useMatchContext();
+  const { getReviewsByMatch } = useReviewContext();
 
   const match = getMatchById(id || '');
   const matchReviews = getReviewsByMatch(id || '');
@@ -38,17 +38,6 @@ export default function MatchDetailsScreen() {
     router.push(`/live-match?id=${match.id}`);
   };
 
-  const getStatusColor = () => {
-    switch (match.status) {
-      case 'live':
-        return Colors.live;
-      case 'upcoming':
-        return Colors.primary;
-      case 'completed':
-        return Colors.textSecondary;
-    }
-  };
-
   return (
     <>
       <Stack.Screen
@@ -59,23 +48,12 @@ export default function MatchDetailsScreen() {
           headerShadowVisible: false,
         }}
       />
-      <LinearGradient
-        colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-        style={styles.gradient}
-      >
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: insets.bottom + 100 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
+      <ScreenContainer paddingBottom={100} contentStyle={styles.content}>
           <Card variant="elevated" style={styles.matchCard}>
             <View style={styles.statusContainer}>
-              <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor()}20` }]}>
-                {match.status === 'live' && <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />}
-                <Text style={[styles.statusText, { color: getStatusColor() }]}>
+              <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(match.status)}20` }]}>
+                {match.status === 'live' && <View style={[styles.statusDot, { backgroundColor: getStatusColor(match.status) }]} />}
+                <Text style={[styles.statusText, { color: getStatusColor(match.status) }]}>
                   {match.status.toUpperCase()}
                 </Text>
               </View>
@@ -120,19 +98,12 @@ export default function MatchDetailsScreen() {
               ))}
             </>
           )}
-        </ScrollView>
-      </LinearGradient>
+      </ScreenContainer>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   content: {
     padding: 20,
   },

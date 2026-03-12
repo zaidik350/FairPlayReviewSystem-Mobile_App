@@ -1,26 +1,21 @@
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useMatchContext } from '@/context/MatchContext';
 import { Stack, useRouter } from 'expo-router';
 import { Calendar, FileText, MapPin, Users } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CreateMatchScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { addMatch } = useApp();
+  const { addMatch } = useMatchContext();
 
   const [name, setName] = useState('');
   const [teams, setTeams] = useState('');
@@ -64,21 +59,7 @@ export default function CreateMatchScreen() {
           headerShadowVisible: false,
         }}
       />
-      <LinearGradient
-        colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-        style={styles.gradient}
-      >
-        <KeyboardAvoidingView
-          style={styles.container}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <ScrollView
-            contentContainerStyle={[
-              styles.content,
-              { paddingBottom: insets.bottom + 20 },
-            ]}
-            showsVerticalScrollIndicator={false}
-          >
+      <ScreenContainer keyboard contentStyle={styles.content}>
             <Text style={styles.title}>Create New Match</Text>
             <Text style={styles.subtitle}>
               Fill in the match details to schedule a new game
@@ -134,20 +115,12 @@ export default function CreateMatchScreen() {
                 />
               </View>
             </Card>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </LinearGradient>
+      </ScreenContainer>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   content: {
     paddingHorizontal: 20,
     paddingTop: 20,

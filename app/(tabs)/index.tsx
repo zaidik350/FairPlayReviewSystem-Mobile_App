@@ -1,33 +1,35 @@
 import Card from '@/components/Card';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
+import { useMatchContext } from '@/context/MatchContext';
+import { useReviewContext } from '@/context/ReviewContext';
 import type { Review } from '@/types';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
-  CalendarPlus,
-  ChevronRight,
-  FileSearch,
-  Play,
-  Radio,
-  Zap,
+    CalendarPlus,
+    ChevronRight,
+    FileSearch,
+    Play,
+    Radio,
+    Zap,
 } from 'lucide-react-native';
 import React from 'react';
 import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { user, getLiveMatches, reviews } = useApp();
+  const { user } = useAuth();
+  const { getLiveMatches } = useMatchContext();
+  const { reviews } = useReviewContext();
 
   const liveMatches = getLiveMatches();
 
@@ -55,18 +57,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-      style={styles.gradient}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 100 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
+    <ScreenContainer paddingTop={16} paddingBottom={100} contentStyle={styles.content}>
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Hi, {user?.name || 'Umpire'}</Text>
@@ -194,18 +185,11 @@ export default function HomeScreen() {
             before making your final decision.
           </Text>
         </Card>
-      </ScrollView>
-    </LinearGradient>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   content: {
     paddingHorizontal: 20,
   },

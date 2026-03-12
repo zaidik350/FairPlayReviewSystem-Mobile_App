@@ -1,10 +1,10 @@
 import Button from '@/components/Button';
 import MatchCard from '@/components/MatchCard';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
+import { useMatchContext } from '@/context/MatchContext';
 import type { Match } from '@/types';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Filter, Plus } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -22,7 +22,7 @@ type FilterType = 'all' | 'live' | 'upcoming' | 'completed';
 export default function MatchesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { matches, getLiveMatches, getUpcomingMatches, getCompletedMatches } = useApp();
+  const { matches, getLiveMatches, getUpcomingMatches, getCompletedMatches } = useMatchContext();
   const [filter, setFilter] = useState<FilterType>('all');
 
   const getFilteredMatches = () => {
@@ -60,10 +60,7 @@ export default function MatchesScreen() {
   ];
 
   return (
-    <LinearGradient
-      colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-      style={styles.gradient}
-    >
+    <ScreenContainer scroll={false} safeArea={false}>
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={styles.title}>Matches</Text>
         <TouchableOpacity
@@ -143,7 +140,7 @@ export default function MatchesScreen() {
           ))
         )}
       </ScrollView>
-    </LinearGradient>
+    </ScreenContainer>
   );
 }
 

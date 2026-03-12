@@ -1,8 +1,9 @@
 import Card from '@/components/Card';
 import DecisionBadge from '@/components/DecisionBadge';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useReviewContext } from '@/context/ReviewContext';
+import { formatDateLong } from '@/utils/formatters';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import {
     CheckCircle,
@@ -15,17 +16,14 @@ import {
 } from 'lucide-react-native';
 import React from 'react';
 import {
-    ScrollView,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ReviewDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const insets = useSafeAreaInsets();
-  const { getReviewById } = useApp();
+  const { getReviewById } = useReviewContext();
 
   const review = getReviewById(id || '');
 
@@ -36,18 +34,6 @@ export default function ReviewDetailScreen() {
       </View>
     );
   }
-
-  const formatDate = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   const renderParameterRow = (
     icon: React.ReactNode,
@@ -88,18 +74,7 @@ export default function ReviewDetailScreen() {
           headerShadowVisible: false,
         }}
       />
-      <LinearGradient
-        colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-        style={styles.gradient}
-      >
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: insets.bottom + 40 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
+      <ScreenContainer paddingBottom={40} contentStyle={styles.content}>
           <Card variant="elevated" style={styles.videoCard}>
             <View style={styles.videoPlaceholder}>
               <View style={styles.playButton}>
@@ -118,7 +93,7 @@ export default function ReviewDetailScreen() {
               </View>
               <View style={styles.timestampContainer}>
                 <Clock size={14} color={Colors.textSecondary} />
-                <Text style={styles.timestamp}>{formatDate(review.timestamp)}</Text>
+                <Text style={styles.timestamp}>{formatDateLong(review.timestamp)}</Text>
               </View>
             </View>
           </Card>
@@ -157,19 +132,12 @@ export default function ReviewDetailScreen() {
                 : 'Decision overturned: One or more conditions not met for OUT.'}
             </Text>
           </Card>
-        </ScrollView>
-      </LinearGradient>
+      </ScreenContainer>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   content: {
     padding: 20,
   },

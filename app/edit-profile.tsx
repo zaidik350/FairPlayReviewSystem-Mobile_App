@@ -1,10 +1,11 @@
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
+import { useImagePicker } from '@/hooks/useImagePicker';
 import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { Camera, Mail, Save, User } from 'lucide-react-native';
@@ -12,51 +13,25 @@ import React, { useState } from 'react';
 import {
     Alert,
     Image,
-    Platform,
-    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { user, updateUser } = useApp();
+  const { user, updateUser } = useAuth();
+  const { pick: pickImage } = useImagePicker();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
   const [saving, setSaving] = useState(false);
 
-  const pickImage = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    if (Platform.OS !== 'web') {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Please allow access to your photo library to upload a profile picture.');
-        return;
-      }
-    }
-
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setAvatar(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.log('Image picker error:', error);
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
-    }
+  const handlePickImage = async () => {
+    const uri = await pickImage();
+    if (uri) setAvatar(uri);
   };
 
   const handleSave = async () => {
@@ -97,20 +72,9 @@ export default function EditProfileScreen() {
           headerShadowVisible: false,
         }}
       />
-      <LinearGradient
-        colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-        style={styles.gradient}
-      >
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: insets.bottom + 20 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
+      <ScreenContainer contentStyle={styles.content}>
           <View style={styles.avatarSection}>
-            <TouchableOpacity onPress={pickImage} style={styles.avatarContainer}>
+            <TouchableOpacity onPress={handlePickImage} style={styles.avatarContainer}>
               <LinearGradient
                 colors={[Colors.primary, Colors.primaryDim]}
                 style={styles.avatarRing}
@@ -159,19 +123,12 @@ export default function EditProfileScreen() {
             icon={<Save size={18} color={Colors.background} />}
             style={styles.saveButton}
           />
-        </ScrollView>
-      </LinearGradient>
+      </ScreenContainer>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   content: {
     padding: 20,
   },

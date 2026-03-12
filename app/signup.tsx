@@ -1,27 +1,22 @@
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
+import FormContainer from '@/components/layout/FormContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { Lock, Mail, User, Zap } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SignupScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { login } = useApp();
+  const { login } = useAuth();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -54,21 +49,7 @@ export default function SignupScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-      style={styles.gradient}
-    >
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 20 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
+    <FormContainer contentStyle={styles.scrollContent}>
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               <View style={styles.logoRing}>
@@ -133,19 +114,11 @@ export default function SignupScreen() {
             <Text style={styles.footerText}>Fair Play • Integrity • Excellence</Text>
             <View style={styles.decorLine} />
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </LinearGradient>
+    </FormContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,

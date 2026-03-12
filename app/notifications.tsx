@@ -1,23 +1,20 @@
 import Card from '@/components/Card';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
+import { useNotificationContext } from '@/context/NotificationContext';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack } from 'expo-router';
 import { Bell, FileCheck, Radio, Settings } from 'lucide-react-native';
 import React from 'react';
 import {
-    ScrollView,
     StyleSheet,
     Switch,
     Text,
     View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function NotificationsScreen() {
-  const insets = useSafeAreaInsets();
-  const { notifications, updateNotifications } = useApp();
+  const { notifications, updateNotifications } = useNotificationContext();
 
   const handleToggle = (key: keyof typeof notifications, value: boolean) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -58,18 +55,7 @@ export default function NotificationsScreen() {
           headerShadowVisible: false,
         }}
       />
-      <LinearGradient
-        colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-        style={styles.gradient}
-      >
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: insets.bottom + 20 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
+      <ScreenContainer contentStyle={styles.content}>
           <View style={styles.headerSection}>
             <View style={styles.iconContainer}>
               <Bell size={32} color={Colors.primary} />
@@ -108,19 +94,12 @@ export default function NotificationsScreen() {
             You can change these preferences at any time. Some notifications may
             still be sent for important account and security updates.
           </Text>
-        </ScrollView>
-      </LinearGradient>
+      </ScreenContainer>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   content: {
     padding: 20,
   },

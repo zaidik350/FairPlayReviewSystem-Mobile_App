@@ -1,5 +1,6 @@
 import Colors from '@/constants/colors';
 import { Review } from '@/types';
+import { formatDateShort } from '@/utils/formatters';
 import * as Haptics from 'expo-haptics';
 import { ChevronRight, Clock } from 'lucide-react-native';
 import React from 'react';
@@ -15,16 +16,6 @@ export default function ReviewCard({ review, onPress }: ReviewCardProps) {
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress?.();
-  };
-
-  const formatDate = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   return (
@@ -59,7 +50,7 @@ export default function ReviewCard({ review, onPress }: ReviewCardProps) {
       <View style={styles.footer}>
         <View style={styles.timeRow}>
           <Clock size={12} color={Colors.textMuted} />
-          <Text style={styles.timeText}>{formatDate(review.timestamp)}</Text>
+          <Text style={styles.timeText}>{formatDateShort(review.timestamp)}</Text>
         </View>
         <ChevronRight size={18} color={Colors.primary} />
       </View>

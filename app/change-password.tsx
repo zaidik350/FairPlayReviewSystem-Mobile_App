@@ -1,26 +1,23 @@
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { Lock, Shield } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
     Alert,
-    ScrollView,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { updateUser } = useApp();
+  const { updateUser } = useAuth();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -77,18 +74,7 @@ export default function ChangePasswordScreen() {
           headerShadowVisible: false,
         }}
       />
-      <LinearGradient
-        colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-        style={styles.gradient}
-      >
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: insets.bottom + 20 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
+      <ScreenContainer contentStyle={styles.content}>
           <View style={styles.headerSection}>
             <View style={styles.iconContainer}>
               <Shield size={32} color={Colors.warning} />
@@ -142,19 +128,12 @@ export default function ChangePasswordScreen() {
             <Text style={styles.tipItem}>• Mix letters, numbers, and symbols</Text>
             <Text style={styles.tipItem}>• Avoid common words or patterns</Text>
           </View>
-        </ScrollView>
-      </LinearGradient>
+      </ScreenContainer>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   content: {
     padding: 20,
   },
