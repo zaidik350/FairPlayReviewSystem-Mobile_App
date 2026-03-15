@@ -3,6 +3,7 @@
  * Delegates to reviewService which handles mock vs real API.
  */
 
+import { useAuth } from '@/context/AuthContext';
 import { reviewService } from '@/services/review/reviewService';
 import { Review } from '@/types';
 import createContextHook from '@nkzw/create-context-hook';
@@ -10,9 +11,16 @@ import { useCallback, useEffect, useState } from 'react';
 
 export const [ReviewProvider, useReviewContext] = createContextHook(() => {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const { isLoggedIn, isLoading } = useAuth();
 
-  /* Load reviews on mount */
+  /* Load reviews only for authenticated user */
   useEffect(() => {
+    if (isLoading) return;
+    if (!isLoggedIn) {
+      setReviews([]);
+      return;
+    }
+
     (async () => {
       try {
         const data = await reviewService.getAll();
@@ -21,7 +29,7 @@ export const [ReviewProvider, useReviewContext] = createContextHook(() => {
         console.log('Error loading reviews:', e);
       }
     })();
-  }, []);
+  }, [isLoggedIn, isLoading]);
 
   const refreshReviews = useCallback(async () => {
     const data = await reviewService.getAll();

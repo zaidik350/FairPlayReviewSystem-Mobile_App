@@ -65,6 +65,9 @@ class AuthService:
                 raise HTTPException(status_code=404, detail="User not found")
 
             user = response.data[0]
+            if user.get("email", "").lower() != str(data.email).lower():
+                raise HTTPException(status_code=400, detail="Email does not match authenticated user")
+
             if not verify_password(data.old_password, user["password_hash"]):
                 raise HTTPException(status_code=401, detail="Invalid old password")
 

@@ -1,21 +1,21 @@
 /**
  * Environment & App Configuration
- * 
+ *
  * Toggle USE_REAL_API to switch between mock data and your real backend.
- * Update BASE_URL to point to your deployed backend server.
+ * In development, set EXPO_PUBLIC_API_BASE_URL to override the LAN default.
  */
 
 const isDevelopment = __DEV__;
+const DEV_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://192.168.0.100:8000/api';
 
 export const API_CONFIG = {
   BASE_URL: isDevelopment
-    ? 'http://10.0.2.2:8000/api'   // Android emulator → host machine
+    ? DEV_API_BASE_URL
     : 'https://api.fairplayreview.com/api',
-  /** Use http://localhost:8000/api for web, http://10.0.2.2:8000/api for Android emulator */
-  WEB_URL: 'http://localhost:8000/api',
+  WEB_URL: DEV_API_BASE_URL,
   TIMEOUT: 30000,
   /** Set to true to use the real FastAPI backend */
-  USE_REAL_API: false,
+  USE_REAL_API: true,
 };
 
 export const STORAGE_KEYS = {

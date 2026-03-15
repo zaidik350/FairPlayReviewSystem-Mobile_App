@@ -12,10 +12,11 @@ import { CameraView } from 'expo-camera';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Platform,
-  StyleSheet,
-  Text,
-  View,
+    Alert,
+    Platform,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -23,7 +24,7 @@ export default function LiveMatchScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { getMatchById } = useMatchContext();
+  const { getMatchById, updateMatch } = useMatchContext();
 
   const { cameraRef, permission, requestPermission, facing, toggleFacing } = useCamera();
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -53,6 +54,34 @@ export default function LiveMatchScreen() {
   const handleDismissReview = () => {
     setShowReviewModal(false);
     reset();
+  };
+
+  const handleCompleteMatch = () => {
+    if (isRecording) {
+      Alert.alert('Stop Recording First', 'Please stop the recording before marking the match as completed.');
+      return;
+    }
+
+    Alert.alert(
+      'End Match',
+      'Are you sure you want to mark this match as completed?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Mark Completed',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await updateMatch(match?.id || id || '', { status: 'completed' });
+              router.replace('/(tabs)/matches');
+            } catch (error) {
+              console.log('[LiveMatch][handleCompleteMatch] error:', error);
+              Alert.alert('Error', 'Failed to complete match. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (!permission) {
@@ -97,6 +126,15 @@ export default function LiveMatchScreen() {
     );
   }
 
+  if (match.status === 'completed') {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>This match is already completed.</Text>
+        <Button title="View Details" onPress={() => router.replace(`/match-details?id=${match.id}`)} variant="outline" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -115,6 +153,7 @@ export default function LiveMatchScreen() {
             maxDuration={maxDuration}
             topInset={insets.top}
             onClose={() => router.back()}
+            onEndMatch={handleCompleteMatch}
             onFlip={toggleFacing}
           />
           <RecordingControls
@@ -133,6 +172,7 @@ export default function LiveMatchScreen() {
             maxDuration={maxDuration}
             topInset={insets.top}
             onClose={() => router.back()}
+            onEndMatch={handleCompleteMatch}
             flipDisabled
           />
           <WebCameraFallback />

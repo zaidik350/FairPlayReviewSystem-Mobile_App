@@ -9,35 +9,35 @@ router = APIRouter()
 
 @router.post("/", response_model=dict)
 async def create_review(review: ReviewCreate, current_user=Depends(get_current_user)):
-    new_review = await ReviewService.create_review(review)
+    new_review = await ReviewService.create_review(review, current_user["id"])
     return success_response(data=new_review, message="Review created")
 
 
 @router.get("/", response_model=dict)
-async def get_reviews():
-    reviews = await ReviewService.get_reviews()
+async def get_reviews(current_user=Depends(get_current_user)):
+    reviews = await ReviewService.get_reviews(current_user["id"])
     return success_response(data=reviews)
 
 
 @router.get("/match/{match_id}", response_model=dict)
-async def get_reviews_by_match(match_id: int):
-    reviews = await ReviewService.get_reviews_by_match(match_id)
+async def get_reviews_by_match(match_id: int, current_user=Depends(get_current_user)):
+    reviews = await ReviewService.get_reviews_by_match(match_id, current_user["id"])
     return success_response(data=reviews)
 
 
 @router.get("/{review_id}", response_model=dict)
-async def get_review(review_id: int):
-    review = await ReviewService.get_review(review_id)
+async def get_review(review_id: int, current_user=Depends(get_current_user)):
+    review = await ReviewService.get_review(review_id, current_user["id"])
     return success_response(data=review)
 
 
 @router.put("/{review_id}", response_model=dict)
 async def update_review(review_id: int, review: ReviewUpdate, current_user=Depends(get_current_user)):
-    updated = await ReviewService.update_review(review_id, review)
+    updated = await ReviewService.update_review(review_id, review, current_user["id"])
     return success_response(data=updated, message="Review updated")
 
 
 @router.delete("/{review_id}")
 async def delete_review(review_id: int, current_user=Depends(get_current_user)):
-    await ReviewService.delete_review(review_id)
+    await ReviewService.delete_review(review_id, current_user["id"])
     return success_response(message="Review deleted")

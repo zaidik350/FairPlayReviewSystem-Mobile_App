@@ -20,6 +20,7 @@ class MatchUpdate(BaseModel):
 
 class MatchOut(BaseModel):
     id: int
+    user_id: Optional[int] = None
     name: str
     teams: str
     venue: str

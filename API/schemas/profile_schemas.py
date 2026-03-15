@@ -3,6 +3,8 @@ from typing import Optional
 
 
 class ProfileUpdate(BaseModel):
+    fname: Optional[str] = None
+    lname: Optional[str] = None
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     avatar: Optional[str] = None

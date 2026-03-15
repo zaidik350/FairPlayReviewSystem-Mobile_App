@@ -36,5 +36,6 @@ class AuthResponse(BaseModel):
 
 
 class ChangePassword(BaseModel):
+    email: EmailStr
     old_password: str
     new_password: str

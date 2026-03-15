@@ -9,10 +9,10 @@ import { Stack, useRouter } from 'expo-router';
 import { Lock, Shield } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    Alert,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 export default function ChangePasswordScreen() {
@@ -23,6 +23,7 @@ export default function ChangePasswordScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
+  const passwordsDoNotMatch = !!confirmPassword && newPassword !== confirmPassword;
 
   const handleChangePassword = async () => {
     if (!currentPassword) {
@@ -111,12 +112,17 @@ export default function ChangePasswordScreen() {
               secureTextEntry
               icon={<Lock size={20} color={Colors.textMuted} />}
             />
+
+            {passwordsDoNotMatch ? (
+              <Text style={styles.validationText}>New password does not match.</Text>
+            ) : null}
           </Card>
 
           <Button
             title="Change Password"
             onPress={handleChangePassword}
             loading={saving}
+            disabled={passwordsDoNotMatch}
             icon={<Lock size={18} color={Colors.background} />}
             style={styles.saveButton}
           />
@@ -166,6 +172,12 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginBottom: 24,
+  },
+  validationText: {
+    fontSize: 12,
+    color: Colors.destructive,
+    marginTop: -8,
+    marginBottom: 8,
   },
   tipsCard: {
     backgroundColor: 'rgba(0, 255, 136, 0.05)',

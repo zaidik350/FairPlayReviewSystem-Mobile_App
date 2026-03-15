@@ -5,9 +5,10 @@ from core.supabase_client import supabase_client, MATCHES_TABLE
 
 class MatchService:
     @staticmethod
-    async def create_match(data: MatchCreate):
+    async def create_match(data: MatchCreate, user_id: int):
         try:
             match_dict = data.model_dump()
+            match_dict["user_id"] = user_id
             response = supabase_client.table(MATCHES_TABLE).insert(match_dict).execute()
             if response.data:
                 return response.data[0]
@@ -18,17 +19,17 @@ class MatchService:
             raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
     @staticmethod
-    async def get_matches():
+    async def get_matches(user_id: int):
         try:
-            response = supabase_client.table(MATCHES_TABLE).select("*").order("created_at", desc=True).execute()
+            response = supabase_client.table(MATCHES_TABLE).select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
             return response.data
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
     @staticmethod
-    async def get_match(match_id: int):
+    async def get_match(match_id: int, user_id: int):
         try:
-            response = supabase_client.table(MATCHES_TABLE).select("*").eq("id", match_id).execute()
+            response = supabase_client.table(MATCHES_TABLE).select("*").eq("id", match_id).eq("user_id", user_id).execute()
             if response.data:
                 return response.data[0]
             raise HTTPException(status_code=404, detail="Match not found")
@@ -38,14 +39,18 @@ class MatchService:
             raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
     @staticmethod
-    async def update_match(match_id: int, data: MatchUpdate):
+    async def update_match(match_id: int, data: MatchUpdate, user_id: int):
         try:
-            check = supabase_client.table(MATCHES_TABLE).select("*").eq("id", match_id).execute()
+            check = supabase_client.table(MATCHES_TABLE).select("*").eq("id", match_id).eq("user_id", user_id).execute()
             if not check.data:
                 raise HTTPException(status_code=404, detail="Match not found")
 
+            existing_match = check.data[0]
+            if existing_match.get("status") == "completed":
+                raise HTTPException(status_code=400, detail="Completed matches cannot be edited")
+
             update_data = data.model_dump(exclude_unset=True)
-            response = supabase_client.table(MATCHES_TABLE).update(update_data).eq("id", match_id).execute()
+            response = supabase_client.table(MATCHES_TABLE).update(update_data).eq("id", match_id).eq("user_id", user_id).execute()
             if response.data:
                 return response.data[0]
             raise HTTPException(status_code=500, detail="Failed to update match")
@@ -55,13 +60,17 @@ class MatchService:
             raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
     @staticmethod
-    async def delete_match(match_id: int):
+    async def delete_match(match_id: int, user_id: int):
         try:
-            check = supabase_client.table(MATCHES_TABLE).select("*").eq("id", match_id).execute()
+            check = supabase_client.table(MATCHES_TABLE).select("*").eq("id", match_id).eq("user_id", user_id).execute()
             if not check.data:
                 raise HTTPException(status_code=404, detail="Match not found")
 
-            supabase_client.table(MATCHES_TABLE).delete().eq("id", match_id).execute()
+            existing_match = check.data[0]
+            if existing_match.get("status") == "completed":
+                raise HTTPException(status_code=400, detail="Completed matches cannot be deleted")
+
+            supabase_client.table(MATCHES_TABLE).delete().eq("id", match_id).eq("user_id", user_id).execute()
             return True
         except HTTPException as e:
             raise e

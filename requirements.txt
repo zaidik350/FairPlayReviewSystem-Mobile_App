@@ -17,3 +17,5 @@ npx expo install expo-haptics
 npx expo install expo-media-library
 npm install @tanstack/react-query
 npm install @nkzw/create-context-hook
+npm install @react-native-community/datetimepicker
+npm install @react-native-community/datetimepicker --save 

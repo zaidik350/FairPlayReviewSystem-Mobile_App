@@ -27,7 +27,8 @@ export interface LoginRequest {
 }
 
 export interface SignupRequest {
-  name: string;
+  fname: string;
+  lname: string;
   email: string;
   password: string;
 }
@@ -35,8 +36,10 @@ export interface SignupRequest {
 /** Backend returns user + token on both login and signup */
 export interface AuthResponseData {
   user: {
-    id: number;
-    name: string;
+    id: number | string;
+    name?: string;
+    fname?: string;
+    lname?: string;
     email: string;
     avatar: string | null;
   };
@@ -45,6 +48,7 @@ export interface AuthResponseData {
 }
 
 export interface ChangePasswordRequest {
+  email: string;
   old_password: string;
   new_password: string;
 }
@@ -52,6 +56,8 @@ export interface ChangePasswordRequest {
 /* ── User / Profile ── */
 
 export interface UpdateProfileRequest {
+  fname?: string;
+  lname?: string;
   name?: string;
   email?: string;
   avatar?: string;
@@ -61,6 +67,7 @@ export interface UpdateProfileRequest {
 
 export interface ApiMatch {
   id: number;
+  user_id?: number;
   name: string;
   teams: string;
   venue: string;

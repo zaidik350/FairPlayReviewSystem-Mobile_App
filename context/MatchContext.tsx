@@ -3,6 +3,7 @@
  * Delegates to matchService which handles mock vs real API.
  */
 
+import { useAuth } from '@/context/AuthContext';
 import { matchService } from '@/services/match/matchService';
 import { Match } from '@/types';
 import createContextHook from '@nkzw/create-context-hook';
@@ -10,9 +11,16 @@ import { useCallback, useEffect, useState } from 'react';
 
 export const [MatchProvider, useMatchContext] = createContextHook(() => {
   const [matches, setMatches] = useState<Match[]>([]);
+  const { isLoggedIn, isLoading } = useAuth();
 
-  /* Load matches on mount */
+  /* Load matches only for authenticated user */
   useEffect(() => {
+    if (isLoading) return;
+    if (!isLoggedIn) {
+      setMatches([]);
+      return;
+    }
+
     (async () => {
       try {
         const data = await matchService.getAll();
@@ -21,7 +29,7 @@ export const [MatchProvider, useMatchContext] = createContextHook(() => {
         console.log('Error loading matches:', e);
       }
     })();
-  }, []);
+  }, [isLoggedIn, isLoading]);
 
   const refreshMatches = useCallback(async () => {
     const data = await matchService.getAll();
@@ -29,19 +37,40 @@ export const [MatchProvider, useMatchContext] = createContextHook(() => {
   }, []);
 
   const addMatch = useCallback(async (match: Omit<Match, 'id'>) => {
-    const created = await matchService.create(match);
-    setMatches(prev => [...prev, created]);
-    return created;
+    try {
+      console.log('[MatchContext][addMatch] input:', match);
+      const created = await matchService.create(match);
+      setMatches(prev => [...prev, created]);
+      console.log('[MatchContext][addMatch] created:', created);
+      return created;
+    } catch (error) {
+      console.log('[MatchContext][addMatch] error:', error);
+      throw error;
+    }
   }, []);
 
   const updateMatch = useCallback(async (id: string, updates: Partial<Match>) => {
-    await matchService.update(id, updates);
-    setMatches(prev => prev.map(m => (m.id === id ? { ...m, ...updates } : m)));
+    try {
+      console.log('[MatchContext][updateMatch] input:', { id, updates });
+      await matchService.update(id, updates);
+      setMatches(prev => prev.map(m => (m.id === id ? { ...m, ...updates } : m)));
+      console.log('[MatchContext][updateMatch] success:', { id, updates });
+    } catch (error) {
+      console.log('[MatchContext][updateMatch] error:', error);
+      throw error;
+    }
   }, []);
 
   const deleteMatch = useCallback(async (id: string) => {
-    await matchService.remove(id);
-    setMatches(prev => prev.filter(m => m.id !== id));
+    try {
+      console.log('[MatchContext][deleteMatch] input:', { id });
+      await matchService.remove(id);
+      setMatches(prev => prev.filter(m => m.id !== id));
+      console.log('[MatchContext][deleteMatch] success:', { id });
+    } catch (error) {
+      console.log('[MatchContext][deleteMatch] error:', error);
+      throw error;
+    }
   }, []);
 
   const getMatchById = useCallback((id: string) => matches.find(m => m.id === id), [matches]);

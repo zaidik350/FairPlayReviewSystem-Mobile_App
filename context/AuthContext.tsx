@@ -6,6 +6,7 @@
 import { authService } from '@/services/auth/authService';
 import { userService } from '@/services/user/userService';
 import { User } from '@/types';
+import { UpdateProfileRequest } from '@/types/api.types';
 import createContextHook from '@nkzw/create-context-hook';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -36,8 +37,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     setIsLoggedIn(true);
   }, []);
 
-  const signup = useCallback(async (name: string, email: string, password: string) => {
-    const { user: u } = await authService.signup({ name, email, password });
+  const signup = useCallback(async (fname: string, lname: string ,email: string, password: string) => {
+    const { user: u } = await authService.signup({ fname, lname, email, password });
     setUser(u);
     setIsLoggedIn(true);
   }, []);
@@ -48,14 +49,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     setIsLoggedIn(false);
   }, []);
 
-  const updateUser = useCallback(async (updates: Partial<User>) => {
+  const updateUser = useCallback(async (updates: UpdateProfileRequest) => {
     const updated = await userService.updateProfile(updates);
     setUser(updated);
   }, []);
 
   const changePassword = useCallback(async (oldPassword: string, newPassword: string) => {
-    await authService.changePassword({ old_password: oldPassword, new_password: newPassword });
-  }, []);
+    if (!user?.email) throw new Error('Unable to change password: user email is missing.');
+    await authService.changePassword({
+      email: user.email,
+      old_password: oldPassword,
+      new_password: newPassword,
+    });
+  }, [user?.email]);
 
   return { user, isLoggedIn, isLoading, login, signup, logout, updateUser, changePassword };
 });

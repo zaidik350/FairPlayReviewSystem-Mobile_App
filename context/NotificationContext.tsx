@@ -3,6 +3,7 @@
  * Delegates to userService which handles mock vs real API.
  */
 
+import { useAuth } from '@/context/AuthContext';
 import { userService } from '@/services/user/userService';
 import { NotificationSettings } from '@/types';
 import createContextHook from '@nkzw/create-context-hook';
@@ -16,9 +17,17 @@ const DEFAULT_NOTIFICATIONS: NotificationSettings = {
 
 export const [NotificationProvider, useNotificationContext] = createContextHook(() => {
   const [notifications, setNotifications] = useState<NotificationSettings>(DEFAULT_NOTIFICATIONS);
+  const { isLoggedIn, isLoading } = useAuth();
 
-  /* Load notification settings on mount */
+  /* Load notification settings only when the user is authenticated */
   useEffect(() => {
+    if (isLoading) return;
+
+    if (!isLoggedIn) {
+      setNotifications(DEFAULT_NOTIFICATIONS);
+      return;
+    }
+
     (async () => {
       try {
         const data = await userService.getNotificationSettings();
@@ -27,7 +36,7 @@ export const [NotificationProvider, useNotificationContext] = createContextHook(
         console.log('Error loading notifications:', e);
       }
     })();
-  }, []);
+  }, [isLoggedIn, isLoading]);
 
   const updateNotifications = useCallback(async (updates: Partial<NotificationSettings>) => {
     const updated = await userService.updateNotificationSettings(updates);

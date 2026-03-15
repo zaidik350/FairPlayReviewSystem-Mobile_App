@@ -53,7 +53,15 @@ class UserService {
     }
     const json = await AsyncStorage.getItem(STORAGE_KEYS.USER);
     const current: User = json ? JSON.parse(json) : { id: '1', name: '', email: '' };
-    const updated = { ...current, ...data };
+    const composedName = (data.fname || data.lname)
+      ? `${data.fname ?? ''} ${data.lname ?? ''}`.trim()
+      : undefined;
+
+    const updated = {
+      ...current,
+      ...data,
+      name: composedName || data.name || current.name,
+    };
     await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
     return updated;
   }

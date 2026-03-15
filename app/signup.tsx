@@ -8,24 +8,36 @@ import { useRouter } from 'expo-router';
 import { Lock, Mail, User, Zap } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function SignupScreen() {
   const router = useRouter();
   const { signup } = useAuth();
   
-  const [name, setName] = useState('');
+  const [fname, setfName] = useState('');
+  const [lname, setlName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const getErrorMessage = (err: unknown): string => {
+    if (typeof err === 'string') return err;
+    if (err && typeof err === 'object') {
+      const maybeError = err as { message?: string };
+      if (typeof maybeError.message === 'string' && maybeError.message.trim()) {
+        return maybeError.message;
+      }
+    }
+    return 'Signup failed. Please try again.';
+  };
+
   const handleSignup = async () => {
-    if (!name || !email || !password) {
+    if (!fname || !lname || !email || !password) {
       setError('Please fill in all fields');
       return;
     }
@@ -39,10 +51,11 @@ export default function SignupScreen() {
     setError('');
     
     try {
-      await signup(name, email, password);
+      await signup(fname,lname, email, password);
       router.replace('/(tabs)');
     } catch (err) {
-      setError('Signup failed. Please try again.');
+      console.log('Signup error:', err);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -67,10 +80,19 @@ export default function SignupScreen() {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Input
-              label="Full Name"
+              label="First Name"
+              placeholder="Enter your first name"
+              value={fname}
+              onChangeText={setfName}
+              autoCapitalize="words"
+              icon={<User size={20} color={Colors.textSecondary} />}
+            />
+
+            <Input
+              label="Last Name"
               placeholder="Enter your name"
-              value={name}
-              onChangeText={setName}
+              value={lname}
+              onChangeText={setlName}
               autoCapitalize="words"
               icon={<User size={20} color={Colors.textSecondary} />}
             />

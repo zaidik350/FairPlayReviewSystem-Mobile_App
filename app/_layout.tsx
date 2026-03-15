@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 SplashScreen.preventAutoHideAsync();
@@ -44,6 +44,17 @@ function RootLayoutNav() {
     <Stack
       screenOptions={{
         headerBackTitle: "Back",
+        headerBackVisible: false,
+        headerLeft: ({ canGoBack }) =>
+          canGoBack ? (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{ paddingVertical: 4, paddingRight: 8 }}
+            >
+              <Text style={{ color: Colors.primary, fontSize: 30, fontWeight: "700", lineHeight: 28 }}>{" <"}</Text>
+            </TouchableOpacity>
+          ) : undefined,
         headerStyle: { backgroundColor: Colors.background },
         headerTintColor: Colors.text,
         headerShadowVisible: false,
