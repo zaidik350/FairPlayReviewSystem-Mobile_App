@@ -5,14 +5,15 @@ import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
 import { useMatchContext } from '@/context/MatchContext';
 import { useReviewContext } from '@/context/ReviewContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { CheckCircle, FileSearch, XCircle } from 'lucide-react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -23,10 +24,18 @@ type MatchFilterType = 'all' | string;
 export default function ReviewsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { reviews } = useReviewContext();
+  const { reviews, refreshReviews } = useReviewContext();
   const { matches } = useMatchContext();
   const [filter, setFilter] = useState<FilterType>('all');
   const [matchFilter, setMatchFilter] = useState<MatchFilterType>('all');
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshReviews().catch((error) => {
+        console.log('[ReviewsScreen][useFocusEffect] refresh error:', error);
+      });
+    }, [refreshReviews])
+  );
 
   const filteredReviews = useMemo(() => {
     let result = reviews;

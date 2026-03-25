@@ -13,6 +13,8 @@ interface ReviewCardProps {
 }
 
 export default function ReviewCard({ review, onPress }: ReviewCardProps) {
+  const isOverturned = review.originalDecision !== review.decision;
+
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress?.();
@@ -30,12 +32,28 @@ export default function ReviewCard({ review, onPress }: ReviewCardProps) {
       </View>
       
       <View style={styles.details}>
-        <View style={styles.overBadge}>
-          <Text style={styles.overLabel}>Over</Text>
-          <Text style={styles.overValue}>{review.over}</Text>
+        <View
+          style={[
+            styles.statusBadge,
+            isOverturned ? styles.overturnedBadge : styles.confirmedBadge,
+          ]}
+        >
+          <Text style={styles.statusLabel}>Review</Text>
+          <Text
+            style={[
+              styles.statusValue,
+              { color: isOverturned ? Colors.notOut : Colors.out },
+            ]}
+          >
+            {isOverturned ? 'Overturned' : 'Confirmed'}
+          </Text>
         </View>
         
         <View style={styles.infoContainer}>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Original:</Text>
+            <Text style={styles.infoValue}>{review.originalDecision}</Text>
+          </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Impact:</Text>
             <Text style={styles.infoValue}>{review.impact}</Text>
@@ -86,23 +104,28 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 16,
   },
-  overBadge: {
-    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+  statusBadge: {
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 8,
     alignItems: 'center',
+    minWidth: 96,
   },
-  overLabel: {
+  confirmedBadge: {
+    backgroundColor: 'rgba(0, 255, 136, 0.12)',
+  },
+  overturnedBadge: {
+    backgroundColor: 'rgba(255, 68, 68, 0.12)',
+  },
+  statusLabel: {
     fontSize: 10,
     color: Colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  overValue: {
-    fontSize: 18,
+  statusValue: {
+    fontSize: 14,
     fontWeight: '700' as const,
-    color: Colors.primary,
   },
   infoContainer: {
     flex: 1,

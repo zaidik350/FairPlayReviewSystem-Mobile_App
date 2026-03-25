@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Depends
+from fastapi import APIRouter, UploadFile, File, Depends, Form
 from services.detection_service import DetectionService
 from utils.response_formatter import success_response
 from dependencies.auth_dependency import get_current_user
@@ -7,8 +7,13 @@ router = APIRouter()
 
 
 @router.post("/analyze-video")
-async def analyze_video(match_id: int, video_file: UploadFile = File(...), current_user=Depends(get_current_user)):
-    result = await DetectionService.analyze_video(match_id, video_file)
+async def analyze_video(
+    match_id: int,
+    video_file: UploadFile = File(...),
+    original_decision: str = Form(...),
+    current_user=Depends(get_current_user),
+):
+    result = await DetectionService.analyze_video(match_id, video_file, original_decision)
     return success_response(data=result.model_dump(), message="Video analyzed")
 
 

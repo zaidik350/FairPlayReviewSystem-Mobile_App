@@ -43,8 +43,8 @@ export default function MatchesScreen() {
     setFilter(newFilter);
   };
 
-  const handleMatchPress = (matchId: string, status: string) => {
-    if (status === 'live') {
+  const handleMatchPress = (matchId: string, status: string, pitchConfigured?: boolean) => {
+    if (status === 'live' && pitchConfigured) {
       router.push(`/live-match?id=${matchId}`);
     } else {
       router.push(`/match-details?id=${matchId}`);
@@ -135,7 +135,7 @@ export default function MatchesScreen() {
             <MatchCard
               key={match.id}
               match={match}
-              onPress={() => handleMatchPress(match.id, match.status)}
+              onPress={() => handleMatchPress(match.id, match.status, match.pitchConfigured)}
             />
           ))
         )}

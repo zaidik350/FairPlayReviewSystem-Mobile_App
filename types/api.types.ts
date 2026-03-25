@@ -73,6 +73,10 @@ export interface ApiMatch {
   venue: string;
   date: string;
   status: string;
+  pitch_configured?: boolean;
+  config_flag?: boolean;
+  pitch_image_uri?: string;
+  pitch_image?: string;
   created_at?: string;
 }
 
@@ -90,6 +94,25 @@ export interface UpdateMatchRequest {
   venue?: string;
   date?: string;
   status?: string;
+}
+
+export interface WicketDetection {
+  label: string;
+  box: number[];
+  conf: number;
+}
+
+export interface WicketConfigResponse {
+  match_id: number;
+  user_id: number;
+  configured: boolean;
+  near_box: number[] | null;
+  far_box: number[] | null;
+  updated_at: string | null;
+}
+
+export interface AutoWicketConfigResponse extends WicketConfigResponse {
+  raw_detections?: WicketDetection[];
 }
 
 /* ── Reviews (snake_case from backend) ── */
@@ -125,6 +148,22 @@ export interface CreateReviewRequest {
 /* ── Detection / DRS Analysis ── */
 
 export interface AnalyzeVideoResponse {
+  match_id?: number;
+  user_id?: number;
+  status?: string;
+  processing_time_ms?: number;
+  frame_count?: number;
+  output_video_path?: string;
+  frames_dir?: string;
+  metadata_path?: string;
+  summary_stats?: {
+    total_frames?: number;
+    frames_with_ball?: number;
+    frames_with_batsman?: number;
+    frames_with_wicket?: number;
+    frames_with_pose?: number;
+    tracking_active_frames?: number;
+  };
   impact: ImpactType;
   pitch: PitchType;
   wickets: WicketsType;

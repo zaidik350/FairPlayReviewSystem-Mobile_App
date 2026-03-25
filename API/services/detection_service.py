@@ -41,7 +41,10 @@ def _build_drs_result(raw: dict = None) -> DetectionResult:
 
 class DetectionService:
     @staticmethod
-    async def analyze_video(match_id: int, video_file: UploadFile):
+    async def analyze_video(match_id: int, video_file: UploadFile, original_decision: str):
+        if original_decision not in {"OUT", "NOT OUT"}:
+            raise HTTPException(status_code=400, detail="original_decision must be 'OUT' or 'NOT OUT'")
+
         file_path = save_upload_file(video_file)
         try:
             if DETECTION_PIPELINE_AVAILABLE:

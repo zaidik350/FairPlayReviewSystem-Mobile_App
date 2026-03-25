@@ -112,14 +112,14 @@ export default function CreateMatchScreen() {
     setError('');
 
     try {
-      await addMatch({
+      const created = await addMatch({
         name,
         teams,
         venue,
         date: formatDateTime(selectedDateTime),
         status: 'upcoming',
       });
-      router.back();
+      router.replace(`/match-details?id=${created.id}&openPitchConfig=1`);
     } catch (err) {
       console.log('[CreateMatchScreen][handleCreate] error:', err);
       setError('Failed to create match. Please try again.');

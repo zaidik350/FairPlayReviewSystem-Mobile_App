@@ -5,21 +5,21 @@ import DecisionResult from '@/components/review/DecisionResult';
 import ParameterCard from '@/components/review/ParameterCard';
 import VideoCard from '@/components/review/VideoCard';
 import Colors from '@/constants/colors';
-import { useReviewContext } from '@/context/ReviewContext';
+import { reviewService } from '@/services/review/reviewService';
 import { DecisionType, ImpactType, PitchType, WicketsType } from '@/types';
 import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
-    Circle,
-    Crosshair,
-    Target,
+  Circle,
+  Crosshair,
+  Target,
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
-    Animated,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 export default function ReviewAnalysisScreen() {
@@ -30,80 +30,76 @@ export default function ReviewAnalysisScreen() {
     originalDecision: 'OUT' | 'NOT OUT';
   }>();
   const router = useRouter();
-  const { addReview } = useReviewContext();
 
   const [analyzing, setAnalyzing] = useState(true);
   const [impact, setImpact] = useState<ImpactType>('In-line');
   const [pitch, setPitch] = useState<PitchType>('In-line');
   const [wickets, setWickets] = useState<WicketsType>('Hitting');
   const [decision, setDecision] = useState<DecisionType>('OUT');
-  const [over, setOver] = useState('12.4');
   const [saving, setSaving] = useState(false);
+  const [analysisError, setAnalysisError] = useState('');
 
   const progressAnim = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
-    Animated.timing(progressAnim, {
-      toValue: 1,
-      duration: 2500,
-      useNativeDriver: false,
-    }).start(() => {
-      setAnalyzing(false);
-      simulateAnalysis();
-    });
+    const animation = Animated.loop(
+      Animated.timing(progressAnim, {
+        toValue: 1,
+        duration: 1800,
+        useNativeDriver: false,
+      }),
+      { resetBeforeIteration: true }
+    );
+
+    const runAnalysis = async () => {
+      setAnalyzing(true);
+      setAnalysisError('');
+      progressAnim.setValue(0);
+      animation.start();
+
+      try {
+        if (!videoUri || videoUri.startsWith('mock-video-')) {
+          throw new Error('No valid recorded video found. Please record again and retry review.');
+        }
+
+        const result = await reviewService.analyzeVideo(
+          videoUri,
+          matchId || '',
+          originalDecision || 'OUT'
+        );
+
+        setImpact(result.impact);
+        setPitch(result.pitch);
+        setWickets(result.wickets);
+        setDecision(result.decision);
+
+        Haptics.notificationAsync(
+          result.decision === 'OUT'
+            ? Haptics.NotificationFeedbackType.Success
+            : Haptics.NotificationFeedbackType.Warning
+        );
+      } catch (error: any) {
+        console.log('[ReviewAnalysis][runAnalysis] error:', error);
+        setAnalysisError(error?.message || 'Failed to analyze video. Please try again.');
+      } finally {
+        animation.stop();
+        setAnalyzing(false);
+      }
+    };
+
+    runAnalysis();
+
+    return () => {
+      animation.stop();
+    };
   }, []);
 
-  const simulateAnalysis = () => {
-    const impacts: ImpactType[] = ['In-line', 'Outside'];
-    const pitches: PitchType[] = ['In-line', 'Outside'];
-    const wicketsOptions: WicketsType[] = ['Hitting', 'Missing'];
-
-    const randomImpact = impacts[Math.floor(Math.random() * impacts.length)];
-    const randomPitch = pitches[Math.floor(Math.random() * pitches.length)];
-    const randomWickets = wicketsOptions[Math.floor(Math.random() * wicketsOptions.length)];
-
-    setImpact(randomImpact);
-    setPitch(randomPitch);
-    setWickets(randomWickets);
-
-    const isOut =
-      randomImpact === 'In-line' &&
-      randomPitch === 'In-line' &&
-      randomWickets === 'Hitting';
-
-    setDecision(isOut ? 'OUT' : 'NOT OUT');
-
-    const overNum = Math.floor(Math.random() * 20) + 1;
-    const ballNum = Math.floor(Math.random() * 6) + 1;
-    setOver(`${overNum}.${ballNum}`);
-
-    Haptics.notificationAsync(
-      isOut
-        ? Haptics.NotificationFeedbackType.Success
-        : Haptics.NotificationFeedbackType.Warning
-    );
-  };
-
-  const handleSaveDecision = async () => {
+  const handleReturnToMatch = async () => {
     setSaving(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      await addReview({
-        matchId: matchId || '',
-        matchName: matchName || 'Unknown Match',
-        over,
-        originalDecision: originalDecision || 'OUT',
-        decision,
-        impact,
-        pitch,
-        wickets,
-        videoUri: videoUri || 'mock-video.mp4',
-      });
-
       router.replace(`/live-match?id=${matchId}`);
-    } catch (error) {
-      console.log('Error saving review:', error);
     } finally {
       setSaving(false);
     }
@@ -120,12 +116,14 @@ export default function ReviewAnalysisScreen() {
         }}
       />
       <ScreenContainer contentStyle={styles.content}>
-          <VideoCard matchName={matchName || ''} over={over} />
+          <VideoCard matchName={matchName || ''} />
 
           {analyzing ? (
             <AnalyzingProgress progress={progressAnim} />
           ) : (
             <>
+              {analysisError ? <Text style={styles.errorText}>{analysisError}</Text> : null}
+
               <Text style={styles.sectionTitle}>Decision Parameters</Text>
 
               <View style={styles.parametersContainer}>
@@ -155,8 +153,8 @@ export default function ReviewAnalysisScreen() {
               />
 
               <Button
-                title="Save & Return to Match"
-                onPress={handleSaveDecision}
+                title="Return to Match"
+                onPress={handleReturnToMatch}
                 loading={saving}
                 style={styles.saveButton}
               />
@@ -176,6 +174,12 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: Colors.text,
     marginBottom: 16,
+  },
+  errorText: {
+    color: Colors.destructive,
+    fontSize: 13,
+    marginBottom: 12,
+    textAlign: 'center',
   },
   parametersContainer: {
     gap: 12,

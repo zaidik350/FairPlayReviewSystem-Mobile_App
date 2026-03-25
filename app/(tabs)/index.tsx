@@ -9,20 +9,20 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
-    CalendarPlus,
-    ChevronRight,
-    FileSearch,
-    Play,
-    Radio,
-    Zap,
+  CalendarPlus,
+  ChevronRight,
+  FileSearch,
+  Play,
+  Radio,
+  Zap,
 } from 'lucide-react-native';
 import React from 'react';
 import {
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function HomeScreen() {
@@ -59,7 +59,7 @@ export default function HomeScreen() {
   return (
     <ScreenContainer paddingTop={16} paddingBottom={100} contentStyle={styles.content}>
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerTextContainer}>
             <Text style={styles.greeting}>Hi, {user?.name || 'Umpire'}</Text>
             <Text style={styles.subtitle}>Ready to officiate?</Text>
           </View>
@@ -199,15 +199,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
+  headerTextContainer: {
+    flex: 1,
+    marginRight: -40,
+  },
   greeting: {
     fontSize: 28,
     fontWeight: '700' as const,
     color: Colors.text,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   subtitle: {
     fontSize: 15,
     color: Colors.textSecondary,
     marginTop: 4,
+    flexShrink: 1,
   },
   logoRing: {
     width: 48,
@@ -219,6 +226,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    flexShrink: 0,
   },
   avatarImage: {
     width: '100%',

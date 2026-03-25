@@ -105,10 +105,11 @@ class ReviewService {
   async analyzeVideo(videoUri: string, matchId: string, originalDecision: DecisionType): Promise<AnalyzeVideoResponse> {
     if (API_CONFIG.USE_REAL_API) {
       const formData = new FormData();
-      formData.append('video', { uri: videoUri, type: 'video/mp4', name: 'delivery.mp4' } as unknown as Blob);
-      formData.append('match_id', matchId);
+      formData.append('video_file', { uri: videoUri, type: 'video/mp4', name: 'delivery.mp4' } as unknown as Blob);
       formData.append('original_decision', originalDecision);
-      const res = await apiClient.post<AnalyzeVideoResponse>(API_ENDPOINTS.DETECTION.ANALYZE_VIDEO, formData);
+
+      const endpoint = `${API_ENDPOINTS.DETECTION.ANALYZE_VIDEO}?match_id=${encodeURIComponent(matchId)}`;
+      const res = await apiClient.upload<AnalyzeVideoResponse>(endpoint, formData);
       return res.data;
     }
     // Mock — simulate 2.5 s analysis then random result

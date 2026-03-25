@@ -73,10 +73,42 @@ export const [MatchProvider, useMatchContext] = createContextHook(() => {
     }
   }, []);
 
+  const syncPitchConfig = useCallback(async (matchId: string) => {
+    const cfg = await matchService.getWicketConfig(matchId);
+    const current = matches.find(m => m.id === matchId) ?? null;
+    const synced: Match | null = current ? { ...current, pitchConfigured: cfg.configured } : null;
+    if (synced) {
+      setMatches(prev => prev.map(m => (m.id === matchId ? synced : m)));
+    }
+    return synced;
+  }, [matches]);
+
+  const configurePitch = useCallback(async (matchId: string, mediaUri: string) => {
+    try {
+      const cfg = await matchService.configurePitch(matchId, mediaUri);
+      let updatedMatch: Match | null = null;
+      setMatches(prev => prev.map(m => {
+        if (m.id !== matchId) return m;
+        updatedMatch = {
+          ...m,
+          pitchConfigured: cfg.configured,
+          pitchImageUri: mediaUri,
+        };
+        return updatedMatch;
+      }));
+
+      if (updatedMatch) return updatedMatch;
+      throw new Error('Match not found in local state');
+    } catch (error) {
+      console.log('[MatchContext][configurePitch] error:', error);
+      throw error;
+    }
+  }, []);
+
   const getMatchById = useCallback((id: string) => matches.find(m => m.id === id), [matches]);
   const getLiveMatches = useCallback(() => matches.filter(m => m.status === 'live'), [matches]);
   const getUpcomingMatches = useCallback(() => matches.filter(m => m.status === 'upcoming'), [matches]);
   const getCompletedMatches = useCallback(() => matches.filter(m => m.status === 'completed'), [matches]);
 
-  return { matches, addMatch, updateMatch, deleteMatch, refreshMatches, getMatchById, getLiveMatches, getUpcomingMatches, getCompletedMatches };
+  return { matches, addMatch, updateMatch, deleteMatch, configurePitch, syncPitchConfig, refreshMatches, getMatchById, getLiveMatches, getUpcomingMatches, getCompletedMatches };
 });

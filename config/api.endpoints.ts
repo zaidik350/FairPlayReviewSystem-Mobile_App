@@ -21,6 +21,9 @@ export const API_ENDPOINTS = {
     DETAILS: (id: string | number) => `/matches/${id}`,
     UPDATE: (id: string | number) => `/matches/${id}`,
     DELETE: (id: string | number) => `/matches/${id}`,
+    WICKET_CONFIG: (id: string | number) => `/matches/${id}/wicket-config`,
+    WICKET_CONFIG_AUTO: (id: string | number) => `/matches/${id}/wicket-config/auto`,
+    UPDATE_WICKET_CONFIG: (id: string | number) => `/matches/${id}/wicket-config`,
   },
   REVIEWS: {
     LIST: '/reviews',

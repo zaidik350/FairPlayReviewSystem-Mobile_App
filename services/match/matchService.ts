@@ -7,7 +7,7 @@ import { API_ENDPOINTS } from '@/config/api.endpoints';
 import { API_CONFIG, STORAGE_KEYS } from '@/config/env';
 import { apiClient } from '@/services/api/apiClient';
 import type { Match } from '@/types';
-import type { ApiMatch, CreateMatchRequest, UpdateMatchRequest } from '@/types/api.types';
+import type { ApiMatch, AutoWicketConfigResponse, CreateMatchRequest, UpdateMatchRequest, WicketConfigResponse } from '@/types/api.types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function normalizeStatus(status: string): Match['status'] {
@@ -21,6 +21,7 @@ function normalizeStatus(status: string): Match['status'] {
 
 /** Map backend ApiMatch (id: number) → frontend Match (id: string) */
 function toMatch(api: ApiMatch): Match {
+  const anyApi = api as ApiMatch & { config_flag?: boolean; pitch_image?: string };
   return {
     id: String(api.id),
     name: api.name,
@@ -28,13 +29,15 @@ function toMatch(api: ApiMatch): Match {
     venue: api.venue,
     date: api.date,
     status: normalizeStatus(api.status),
+    pitchConfigured: Boolean(anyApi.pitch_configured ?? anyApi.config_flag ?? false),
+    pitchImageUri: anyApi.pitch_image_uri ?? anyApi.pitch_image,
   };
 }
 
 const DEFAULT_MATCHES: Match[] = [
-  { id: '1', name: 'IPL 2024 - Match 1', teams: 'Mumbai Indians vs Chennai Super Kings', venue: 'Wankhede Stadium, Mumbai', date: 'Feb 10, 2026', status: 'live' },
-  { id: '2', name: 'IPL 2024 - Match 2', teams: 'Royal Challengers vs Delhi Capitals', venue: 'M. Chinnaswamy Stadium, Bangalore', date: 'Feb 12, 2026', status: 'upcoming' },
-  { id: '3', name: 'IPL 2024 - Qualifier', teams: 'Gujarat Titans vs Rajasthan Royals', venue: 'Narendra Modi Stadium, Ahmedabad', date: 'Feb 8, 2026', status: 'completed' },
+  { id: '1', name: 'IPL 2024 - Match 1', teams: 'Mumbai Indians vs Chennai Super Kings', venue: 'Wankhede Stadium, Mumbai', date: 'Feb 10, 2026', status: 'live', pitchConfigured: true },
+  { id: '2', name: 'IPL 2024 - Match 2', teams: 'Royal Challengers vs Delhi Capitals', venue: 'M. Chinnaswamy Stadium, Bangalore', date: 'Feb 12, 2026', status: 'upcoming', pitchConfigured: false },
+  { id: '3', name: 'IPL 2024 - Qualifier', teams: 'Gujarat Titans vs Rajasthan Royals', venue: 'Narendra Modi Stadium, Ahmedabad', date: 'Feb 8, 2026', status: 'completed', pitchConfigured: true },
 ];
 
 class MatchService {
@@ -72,7 +75,13 @@ class MatchService {
         throw error;
       }
     }
-    const newMatch: Match = { ...data, id: Date.now().toString(), status: data.status as Match['status'] || 'upcoming' };
+    const newMatch: Match = {
+      ...data,
+      id: Date.now().toString(),
+      status: data.status as Match['status'] || 'upcoming',
+      pitchConfigured: false,
+      pitchImageUri: undefined,
+    };
     const all = await this.getAll();
     all.push(newMatch);
     await AsyncStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify(all));
@@ -121,6 +130,63 @@ class MatchService {
     const filtered = all.filter(m => m.id !== id);
     await AsyncStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify(filtered));
     console.log('[MatchService][delete] local success:', { id });
+  }
+
+  /* ── Pitch Configuration ── */
+
+  async getWicketConfig(matchId: string): Promise<WicketConfigResponse> {
+    if (API_CONFIG.USE_REAL_API) {
+      const res = await apiClient.get<WicketConfigResponse>(API_ENDPOINTS.MATCHES.WICKET_CONFIG(matchId));
+      return res.data;
+    }
+
+    const all = await this.getAll();
+    const found = all.find(m => m.id === matchId);
+    return {
+      match_id: Number(matchId),
+      user_id: 0,
+      configured: Boolean(found?.pitchConfigured),
+      near_box: null,
+      far_box: null,
+      updated_at: null,
+    };
+  }
+
+  async configurePitch(matchId: string, imageUri: string, wicketConf = 0.25): Promise<WicketConfigResponse> {
+    if (API_CONFIG.USE_REAL_API) {
+      const formData = new FormData();
+      const pitchImage = { uri: imageUri, type: 'image/jpeg', name: 'pitch-config.jpg' } as unknown as Blob;
+      // Backward/forward compatibility: backend may read either key for the same pitch photo.
+      formData.append('pitch_image', pitchImage);
+      formData.append('video_file', pitchImage);
+      formData.append('wicket_conf', String(wicketConf));
+
+      const res = await apiClient.upload<AutoWicketConfigResponse>(API_ENDPOINTS.MATCHES.WICKET_CONFIG_AUTO(matchId), formData);
+      return res.data;
+    }
+
+    const all = await this.getAll();
+    const idx = all.findIndex(m => m.id === matchId);
+    if (idx === -1) {
+      throw new Error('Match not found');
+    }
+
+    const updated: Match = {
+      ...all[idx],
+      pitchConfigured: true,
+      pitchImageUri: imageUri,
+    };
+
+    all[idx] = updated;
+    await AsyncStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify(all));
+    return {
+      match_id: Number(matchId),
+      user_id: 0,
+      configured: true,
+      near_box: null,
+      far_box: null,
+      updated_at: new Date().toISOString(),
+    };
   }
 }
 

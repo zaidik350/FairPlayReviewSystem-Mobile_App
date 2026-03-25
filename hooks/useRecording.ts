@@ -50,10 +50,8 @@ export function useRecording({ maxDuration = 5, cameraRef, onRecordingComplete }
           setRecordedUri(video.uri);
           onRecordingComplete?.(video.uri);
         }
-      } catch {
-        const mock = `mock-video-${Date.now()}.mp4`;
-        setRecordedUri(mock);
-        onRecordingComplete?.(mock);
+      } catch (error) {
+        console.log('[useRecording][start] native recording failed:', error);
       }
     } else {
       // Web fallback

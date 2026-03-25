@@ -15,6 +15,7 @@ interface RecordingControlsProps {
 }
 
 export default function RecordingControls({ isRecording, bottomInset, onStart, onStop }: RecordingControlsProps) {
+
   return (
     <View style={[styles.controls, { paddingBottom: bottomInset + 20 }]}>
       <View style={styles.inner}>

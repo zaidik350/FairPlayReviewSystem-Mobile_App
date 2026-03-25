@@ -18,6 +18,7 @@ import {
     Text,
     View,
 } from 'react-native';
+import { PinchGestureHandler } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LiveMatchScreen() {
@@ -26,7 +27,7 @@ export default function LiveMatchScreen() {
   const insets = useSafeAreaInsets();
   const { getMatchById, updateMatch } = useMatchContext();
 
-  const { cameraRef, permission, requestPermission, facing, toggleFacing } = useCamera();
+  const { cameraRef, permission, requestPermission, facing, zoom, toggleFacing, onPinchGesture, onPinchStateChange } = useCamera();
   const [showReviewModal, setShowReviewModal] = useState(false);
 
   const match = getMatchById(id || '');
@@ -39,13 +40,18 @@ export default function LiveMatchScreen() {
   });
 
   const handleRequestReview = (decision: 'OUT' | 'NOT OUT') => {
+    if (!recordedUri) {
+      Alert.alert('No Recording Found', 'Please record a delivery before requesting a review.');
+      return;
+    }
+
     setShowReviewModal(false);
     router.push({
       pathname: '/review-analysis',
       params: {
         matchId: id,
         matchName: match?.name || 'Unknown Match',
-        videoUri: recordedUri || 'mock-video.mp4',
+        videoUri: recordedUri,
         originalDecision: decision,
       },
     });
@@ -140,29 +146,35 @@ export default function LiveMatchScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       {Platform.OS !== 'web' ? (
-        <CameraView
-          ref={cameraRef}
-          style={styles.camera}
-          facing={facing}
-          mode="video"
-        >
-          <CameraOverlay
-            match={match}
-            isRecording={isRecording}
-            recordingTime={recordingTime}
-            maxDuration={maxDuration}
-            topInset={insets.top}
-            onClose={() => router.back()}
-            onEndMatch={handleCompleteMatch}
-            onFlip={toggleFacing}
-          />
-          <RecordingControls
-            isRecording={isRecording}
-            bottomInset={insets.bottom}
-            onStart={start}
-            onStop={stop}
-          />
-        </CameraView>
+        <PinchGestureHandler onGestureEvent={onPinchGesture} onHandlerStateChange={onPinchStateChange}>
+          <View style={styles.camera}>
+            <CameraView
+              ref={cameraRef}
+              style={styles.camera}
+              facing={facing}
+              mode="video"
+              zoom={zoom}
+              selectedLens="builtInWideAngleCamera"
+            >
+              <CameraOverlay
+                match={match}
+                isRecording={isRecording}
+                recordingTime={recordingTime}
+                maxDuration={maxDuration}
+                topInset={insets.top}
+                onClose={() => router.back()}
+                onEndMatch={handleCompleteMatch}
+                onFlip={toggleFacing}
+              />
+              <RecordingControls
+                isRecording={isRecording}
+                bottomInset={insets.bottom}
+                onStart={start}
+                onStop={stop}
+              />
+            </CameraView>
+          </View>
+        </PinchGestureHandler>
       ) : (
         <View style={styles.webCameraPlaceholder}>
           <CameraOverlay

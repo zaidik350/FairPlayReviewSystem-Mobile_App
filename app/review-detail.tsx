@@ -1,24 +1,25 @@
 import Card from '@/components/Card';
 import DecisionBadge from '@/components/DecisionBadge';
 import ScreenContainer from '@/components/layout/ScreenContainer';
+import { API_CONFIG } from '@/config/env';
 import Colors from '@/constants/colors';
 import { useReviewContext } from '@/context/ReviewContext';
 import { formatDateLong } from '@/utils/formatters';
+import { ResizeMode, Video } from 'expo-av';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import {
-    CheckCircle,
-    Circle,
-    Clock,
-    Crosshair,
-    Play,
-    Target,
-    XCircle,
+  CheckCircle,
+  Circle,
+  Clock,
+  Crosshair,
+  Target,
+  XCircle,
 } from 'lucide-react-native';
 import React from 'react';
 import {
-    StyleSheet,
-    Text,
-    View,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 export default function ReviewDetailScreen() {
@@ -34,6 +35,18 @@ export default function ReviewDetailScreen() {
       </View>
     );
   }
+
+  const resolveVideoUri = (rawUri?: string) => {
+    if (!rawUri) return '';
+    if (/^(https?:|file:|content:|ph:)/i.test(rawUri)) return rawUri;
+
+    // If backend stores relative media path, resolve against API host.
+    const apiHost = API_CONFIG.BASE_URL.replace(/\/api\/?$/, '');
+    const normalizedPath = rawUri.startsWith('/') ? rawUri : `/${rawUri}`;
+    return `${apiHost}${normalizedPath}`;
+  };
+
+  const videoSource = resolveVideoUri(review.videoUri);
 
   const renderParameterRow = (
     icon: React.ReactNode,
@@ -76,12 +89,20 @@ export default function ReviewDetailScreen() {
       />
       <ScreenContainer paddingBottom={40} contentStyle={styles.content}>
           <Card variant="elevated" style={styles.videoCard}>
-            <View style={styles.videoPlaceholder}>
-              <View style={styles.playButton}>
-                <Play size={32} color={Colors.text} fill={Colors.text} />
+            {videoSource ? (
+              <Video
+                source={{ uri: videoSource }}
+                style={styles.videoPlayer}
+                resizeMode={ResizeMode.COVER}
+                useNativeControls
+                shouldPlay={false}
+                isLooping
+              />
+            ) : (
+              <View style={styles.videoPlaceholder}>
+                <Text style={styles.videoLabel}>Processed video not available</Text>
               </View>
-              <Text style={styles.videoLabel}>Delivery Recording</Text>
-            </View>
+            )}
           </Card>
 
           <Card variant="glass" style={styles.infoCard}>
@@ -126,6 +147,9 @@ export default function ReviewDetailScreen() {
           <Card variant="elevated" style={styles.decisionCard}>
             <Text style={styles.decisionLabel}>FINAL DECISION</Text>
             <DecisionBadge decision={review.decision} size="large" />
+            <Text style={styles.originalDecisionText}>
+              Original Decision: {review.originalDecision}
+            </Text>
             <Text style={styles.decisionExplanation}>
               {review.decision === 'OUT'
                 ? 'All conditions met: Ball pitched in-line, impact in-line, and hitting wickets.'
@@ -162,16 +186,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  playButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(0, 255, 136, 0.2)',
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
+  videoPlayer: {
+    height: 200,
+    width: '100%',
+    backgroundColor: '#000',
   },
   videoLabel: {
     fontSize: 14,
@@ -286,5 +304,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
     lineHeight: 20,
     paddingHorizontal: 10,
+  },
+  originalDecisionText: {
+    marginTop: 12,
+    fontSize: 13,
+    color: Colors.text,
+    fontWeight: '600' as const,
   },
 });

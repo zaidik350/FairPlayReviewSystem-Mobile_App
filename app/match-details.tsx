@@ -1,8 +1,9 @@
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
-import ReviewCard from '@/components/ReviewCard';
 import ScreenContainer from '@/components/layout/ScreenContainer';
+import PitchConfigModal from '@/components/match/PitchConfigModal';
+import ReviewCard from '@/components/ReviewCard';
 import Colors from '@/constants/colors';
 import { useMatchContext } from '@/context/MatchContext';
 import { useReviewContext } from '@/context/ReviewContext';
@@ -22,9 +23,9 @@ import {
 } from 'react-native';
 
 export default function MatchDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, openPitchConfig } = useLocalSearchParams<{ id: string; openPitchConfig?: string }>();
   const router = useRouter();
-  const { getMatchById, updateMatch, deleteMatch } = useMatchContext();
+  const { getMatchById, updateMatch, deleteMatch, syncPitchConfig } = useMatchContext();
   const { getReviewsByMatch } = useReviewContext();
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState('');
@@ -35,6 +36,8 @@ export default function MatchDetailsScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showPitchConfigModal, setShowPitchConfigModal] = useState(false);
+  const [pitchConfigMandatory, setPitchConfigMandatory] = useState(false);
 
   const match = getMatchById(id || '');
   const matchReviews = getReviewsByMatch(id || '');
@@ -107,6 +110,14 @@ export default function MatchDetailsScreen() {
     setSelectedDateTime(parseDateTime(match.date));
   }, [match?.id, match?.name, match?.teams, match?.venue, match?.date]);
 
+  useEffect(() => {
+    if (!match) return;
+    if (openPitchConfig === '1') {
+      setPitchConfigMandatory(false);
+      setShowPitchConfigModal(true);
+    }
+  }, [openPitchConfig, match?.id]);
+
   if (!match) {
     return (
       <View style={styles.errorContainer}>
@@ -115,13 +126,29 @@ export default function MatchDetailsScreen() {
     );
   }
 
+  const startMatch = async () => {
+    await updateMatch(match.id, { status: 'live' });
+    router.push(`/live-match?id=${match.id}`);
+  };
+
   const handleStartMatch = async () => {
     if (match.status === 'completed') {
       Alert.alert('Match Completed', 'This match is already completed and cannot be started again.');
       return;
     }
-    await updateMatch(match.id, { status: 'live' });
-    router.push(`/live-match?id=${match.id}`);
+
+    const latest = await syncPitchConfig(match.id);
+    if (!latest?.pitchConfigured) {
+      setPitchConfigMandatory(true);
+      setShowPitchConfigModal(true);
+      Alert.alert(
+        'Wicket Configuration Required',
+        'Please configure wicket before starting this match.'
+      );
+      return;
+    }
+
+    await startMatch();
   };
 
   const handleSaveChanges = async () => {
@@ -320,6 +347,25 @@ export default function MatchDetailsScreen() {
                   <Text style={styles.infoText}>{match.date}</Text>
                 </View>
 
+                <View style={styles.pitchConfigRow}>
+                  <Text style={styles.pitchConfigLabel}>Wicket Config</Text>
+                  <View style={[styles.pitchConfigBadge, match.pitchConfigured ? styles.pitchConfigDone : styles.pitchConfigPending]}>
+                    <Text style={styles.pitchConfigText}>{match.pitchConfigured ? 'Configured' : 'Pending'}</Text>
+                  </View>
+                </View>
+
+                {match.status !== 'completed' && (
+                  <Button
+                    title={match.pitchConfigured ? 'Update Wicket Config' : 'Configure Wicket'}
+                    onPress={() => {
+                      setPitchConfigMandatory(false);
+                      setShowPitchConfigModal(true);
+                    }}
+                    variant="outline"
+                    style={styles.pitchConfigButton}
+                  />
+                )}
+
                 {match.status !== 'completed' ? (
                   <View style={styles.actionRow}>
                     <Button
@@ -365,6 +411,36 @@ export default function MatchDetailsScreen() {
             </>
           )}
       </ScreenContainer>
+
+      <PitchConfigModal
+        visible={showPitchConfigModal}
+        match={match}
+        mandatory={pitchConfigMandatory}
+        onClose={() => {
+          setShowPitchConfigModal(false);
+          setPitchConfigMandatory(false);
+          if (openPitchConfig === '1') {
+            router.back();
+          }
+        }}
+        onConfigured={async () => {
+          setShowPitchConfigModal(false);
+          if (pitchConfigMandatory && match.status !== 'live') {
+            const latest = await syncPitchConfig(match.id);
+            if (!latest?.pitchConfigured) {
+              Alert.alert('Configuration Pending', 'Pitch is not configured yet. Please retake the photo.');
+              setShowPitchConfigModal(true);
+              return;
+            }
+            setPitchConfigMandatory(false);
+            await startMatch();
+            return;
+          }
+          if (openPitchConfig === '1') {
+            router.back();
+          }
+        }}
+      />
     </>
   );
 }
@@ -460,6 +536,37 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.textSecondary,
     flex: 1,
+  },
+  pitchConfigRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  pitchConfigLabel: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontWeight: '600' as const,
+  },
+  pitchConfigBadge: {
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  pitchConfigDone: {
+    backgroundColor: 'rgba(0, 255, 136, 0.15)',
+  },
+  pitchConfigPending: {
+    backgroundColor: 'rgba(255, 184, 0, 0.15)',
+  },
+  pitchConfigText: {
+    fontSize: 12,
+    color: Colors.text,
+    fontWeight: '700' as const,
+  },
+  pitchConfigButton: {
+    marginTop: 6,
   },
   startButton: {
     marginTop: 16,

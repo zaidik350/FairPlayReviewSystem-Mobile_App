@@ -10,10 +10,9 @@ import { StyleSheet, Text, View } from 'react-native';
 
 interface VideoCardProps {
   matchName: string;
-  over: string;
 }
 
-export default function VideoCard({ matchName, over }: VideoCardProps) {
+export default function VideoCard({ matchName }: VideoCardProps) {
   return (
     <Card variant="elevated" style={styles.card}>
       <View style={styles.placeholder}>
@@ -24,7 +23,6 @@ export default function VideoCard({ matchName, over }: VideoCardProps) {
       </View>
       <View style={styles.info}>
         <Text style={styles.matchName}>{matchName}</Text>
-        <Text style={styles.over}>Over: {over}</Text>
       </View>
     </Card>
   );
@@ -37,5 +35,4 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, color: Colors.textSecondary },
   info: { padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   matchName: { fontSize: 14, fontWeight: '600', color: Colors.text, flex: 1 },
-  over: { fontSize: 14, color: Colors.primary, fontWeight: '600' },
 });

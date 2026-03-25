@@ -16,6 +16,34 @@ import { Platform } from 'react-native';
 class ApiClient {
   private timeout = API_CONFIG.TIMEOUT;
 
+  private async parseApiResponse<T>(res: Response): Promise<ApiResponse<T>> {
+    const raw = await res.text();
+    const contentType = res.headers.get('content-type') || '';
+
+    if (!raw) {
+      return {
+        status: res.ok ? 'success' : 'error',
+        data: null as T,
+        message: res.ok ? 'OK' : `HTTP ${res.status}`,
+      };
+    }
+
+    const looksLikeJson = contentType.includes('application/json') || raw.trim().startsWith('{') || raw.trim().startsWith('[');
+    if (looksLikeJson) {
+      try {
+        return JSON.parse(raw) as ApiResponse<T>;
+      } catch {
+        // Fall through to a readable error payload when JSON is malformed.
+      }
+    }
+
+    return {
+      status: 'error',
+      data: null as T,
+      message: `Non-JSON response (${contentType || 'unknown content-type'}): ${raw.slice(0, 180)}`,
+    };
+  }
+
   /** Resolve base URL — web uses localhost, native uses 10.0.2.2 (Android) */
   private get baseURL(): string {
     if (Platform.OS === 'web') return API_CONFIG.WEB_URL;
@@ -45,6 +73,8 @@ class ApiClient {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      // Required for ngrok free domains to bypass browser warning interstitial.
+      'ngrok-skip-browser-warning': 'true',
       ...(opts.headers as Record<string, string>),
     };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -60,8 +90,8 @@ class ApiClient {
         await this.clearTokens();
       }
 
-      const json = await res.json().catch(() => ({ status: 'error', data: null, message: 'Invalid JSON response' }));
-      if (!res.ok) throw { status: 'error', data: null, message: json?.message || json?.detail || `HTTP ${res.status}` };
+      const json = await this.parseApiResponse<T>(res);
+      if (!res.ok) throw { status: 'error', data: null, message: json?.message || `HTTP ${res.status}` };
       return json as ApiResponse<T>;
     } catch (err: any) {
       clearTimeout(timer);
@@ -98,12 +128,16 @@ class ApiClient {
   async upload<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     const token = await this.getToken();
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+    };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const res = await fetch(url, { method: 'POST', headers, body: formData });
-    const json = await res.json();
-    if (!res.ok) throw { status: 'error', data: null, message: json?.message || json?.detail || `HTTP ${res.status}` };
+    const json = await this.parseApiResponse<T>(res);
+    if (!res.ok) throw { status: 'error', data: null, message: json?.message || `HTTP ${res.status}` };
+    if (json.status === 'error') throw { status: 'error', data: null, message: json?.message || 'Upload failed' };
     return json as ApiResponse<T>;
   }
 }

@@ -2,11 +2,11 @@
  * Environment & App Configuration
  *
  * Toggle USE_REAL_API to switch between mock data and your real backend.
- * In development, set EXPO_PUBLIC_API_BASE_URL to override the LAN default.
+ * In development, set EXPO_PUBLIC_API_BASE_URL to override the default API URL.
  */
 
 const isDevelopment = __DEV__;
-const DEV_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://192.168.0.100:8000/api';
+const DEV_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://narcissistically-inventoriable-wynell.ngrok-free.dev/api';
 
 export const API_CONFIG = {
   BASE_URL: isDevelopment
