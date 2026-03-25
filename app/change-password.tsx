@@ -1,31 +1,29 @@
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { Lock, Shield } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { updateUser } = useApp();
+  const { changePassword } = useAuth();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
+  const passwordsDoNotMatch = !!confirmPassword && newPassword !== confirmPassword;
 
   const handleChangePassword = async () => {
     if (!currentPassword) {
@@ -52,8 +50,7 @@ export default function ChangePasswordScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await updateUser({ password: newPassword });
+      await changePassword(currentPassword, newPassword);
       
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert('Success', 'Password changed successfully!', [
@@ -77,18 +74,7 @@ export default function ChangePasswordScreen() {
           headerShadowVisible: false,
         }}
       />
-      <LinearGradient
-        colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-        style={styles.gradient}
-      >
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: insets.bottom + 20 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
+      <ScreenContainer contentStyle={styles.content}>
           <View style={styles.headerSection}>
             <View style={styles.iconContainer}>
               <Shield size={32} color={Colors.warning} />
@@ -126,12 +112,17 @@ export default function ChangePasswordScreen() {
               secureTextEntry
               icon={<Lock size={20} color={Colors.textMuted} />}
             />
+
+            {passwordsDoNotMatch ? (
+              <Text style={styles.validationText}>New password does not match.</Text>
+            ) : null}
           </Card>
 
           <Button
             title="Change Password"
             onPress={handleChangePassword}
             loading={saving}
+            disabled={passwordsDoNotMatch}
             icon={<Lock size={18} color={Colors.background} />}
             style={styles.saveButton}
           />
@@ -142,19 +133,12 @@ export default function ChangePasswordScreen() {
             <Text style={styles.tipItem}>• Mix letters, numbers, and symbols</Text>
             <Text style={styles.tipItem}>• Avoid common words or patterns</Text>
           </View>
-        </ScrollView>
-      </LinearGradient>
+      </ScreenContainer>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   content: {
     padding: 20,
   },
@@ -188,6 +172,12 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginBottom: 24,
+  },
+  validationText: {
+    fontSize: 12,
+    color: Colors.destructive,
+    marginTop: -8,
+    marginBottom: 8,
   },
   tipsCard: {
     backgroundColor: 'rgba(0, 255, 136, 0.05)',

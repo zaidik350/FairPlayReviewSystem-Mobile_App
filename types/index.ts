@@ -19,6 +19,8 @@ export interface Match {
   venue: string;
   date: string;
   status: 'upcoming' | 'live' | 'completed';
+  pitchConfigured?: boolean;
+  pitchImageUri?: string;
 }
 
 export interface Review {

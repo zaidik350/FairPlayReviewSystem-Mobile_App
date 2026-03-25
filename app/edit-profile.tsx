@@ -1,67 +1,51 @@
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
+import { useImagePicker } from '@/hooks/useImagePicker';
 import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { Camera, Mail, Save, User } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Image,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { user, updateUser } = useApp();
+  const { user, updateUser } = useAuth();
+  const { pick: pickImage } = useImagePicker();
 
-  const [name, setName] = useState(user?.name || '');
+  const [initialFirstName, ...restNameParts] = (user?.name || '').trim().split(/\s+/);
+  const initialLastName = restNameParts.join(' ');
+
+  const [firstName, setFirstName] = useState(initialFirstName || '');
+  const [lastName, setLastName] = useState(initialLastName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
   const [saving, setSaving] = useState(false);
 
-  const pickImage = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    if (Platform.OS !== 'web') {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Please allow access to your photo library to upload a profile picture.');
-        return;
-      }
-    }
-
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setAvatar(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.log('Image picker error:', error);
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
-    }
+  const handlePickImage = async () => {
+    const uri = await pickImage();
+    if (uri) setAvatar(uri);
   };
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      Alert.alert('Error', 'Please enter your name.');
+    if (!firstName.trim()) {
+      Alert.alert('Error', 'Please enter your first name.');
+      return;
+    }
+
+    if (!lastName.trim()) {
+      Alert.alert('Error', 'Please enter your last name.');
       return;
     }
 
@@ -74,7 +58,12 @@ export default function EditProfileScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      await updateUser({ name: name.trim(), email: email.trim(), avatar });
+      await updateUser({
+        fname: firstName.trim(),
+        lname: lastName.trim(),
+        email: email.trim(),
+        avatar,
+      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert('Success', 'Profile updated successfully!', [
         { text: 'OK', onPress: () => router.back() },
@@ -97,20 +86,9 @@ export default function EditProfileScreen() {
           headerShadowVisible: false,
         }}
       />
-      <LinearGradient
-        colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-        style={styles.gradient}
-      >
-        <ScrollView
-          style={styles.container}
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: insets.bottom + 20 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
+      <ScreenContainer contentStyle={styles.content}>
           <View style={styles.avatarSection}>
-            <TouchableOpacity onPress={pickImage} style={styles.avatarContainer}>
+            <TouchableOpacity onPress={handlePickImage} style={styles.avatarContainer}>
               <LinearGradient
                 colors={[Colors.primary, Colors.primaryDim]}
                 style={styles.avatarRing}
@@ -120,7 +98,7 @@ export default function EditProfileScreen() {
                     <Image source={{ uri: avatar }} style={styles.avatarImage} />
                   ) : (
                     <Text style={styles.avatarText}>
-                      {name?.charAt(0).toUpperCase() || 'U'}
+                      {firstName?.charAt(0).toUpperCase() || lastName?.charAt(0).toUpperCase() || 'U'}
                     </Text>
                   )}
                 </View>
@@ -134,10 +112,20 @@ export default function EditProfileScreen() {
 
           <Card style={styles.formCard}>
             <Input
-              label="Name"
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter your name"
+              label="First Name"
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="Enter your first name"
+              autoCapitalize="words"
+              icon={<User size={20} color={Colors.textMuted} />}
+            />
+
+            <Input
+              label="Last Name"
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Enter your last name"
+              autoCapitalize="words"
               icon={<User size={20} color={Colors.textMuted} />}
             />
 
@@ -159,19 +147,12 @@ export default function EditProfileScreen() {
             icon={<Save size={18} color={Colors.background} />}
             style={styles.saveButton}
           />
-        </ScrollView>
-      </LinearGradient>
+      </ScreenContainer>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   content: {
     padding: 20,
   },

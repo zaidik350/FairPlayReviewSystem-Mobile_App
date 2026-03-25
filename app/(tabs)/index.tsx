@@ -1,6 +1,9 @@
 import Card from '@/components/Card';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
+import { useMatchContext } from '@/context/MatchContext';
+import { useReviewContext } from '@/context/ReviewContext';
 import type { Review } from '@/types';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,18 +19,17 @@ import {
 import React from 'react';
 import {
   Image,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { user, getLiveMatches, reviews } = useApp();
+  const { user } = useAuth();
+  const { getLiveMatches } = useMatchContext();
+  const { reviews } = useReviewContext();
 
   const liveMatches = getLiveMatches();
 
@@ -55,20 +57,9 @@ export default function HomeScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-      style={styles.gradient}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 100 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
+    <ScreenContainer paddingTop={16} paddingBottom={100} contentStyle={styles.content}>
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerTextContainer}>
             <Text style={styles.greeting}>Hi, {user?.name || 'Umpire'}</Text>
             <Text style={styles.subtitle}>Ready to officiate?</Text>
           </View>
@@ -194,18 +185,11 @@ export default function HomeScreen() {
             before making your final decision.
           </Text>
         </Card>
-      </ScrollView>
-    </LinearGradient>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   content: {
     paddingHorizontal: 20,
   },
@@ -215,15 +199,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
+  headerTextContainer: {
+    flex: 1,
+    marginRight: -40,
+  },
   greeting: {
     fontSize: 28,
     fontWeight: '700' as const,
     color: Colors.text,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   subtitle: {
     fontSize: 15,
     color: Colors.textSecondary,
     marginTop: 4,
+    flexShrink: 1,
   },
   logoRing: {
     width: 48,
@@ -235,6 +226,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    flexShrink: 0,
   },
   avatarImage: {
     width: '100%',

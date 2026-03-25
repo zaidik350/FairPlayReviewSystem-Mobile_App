@@ -1,8 +1,11 @@
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import StatCard from '@/components/StatCard';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
+import { useMatchContext } from '@/context/MatchContext';
+import { useReviewContext } from '@/context/ReviewContext';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -20,18 +23,17 @@ import React from 'react';
 import {
     Alert,
     Image,
-    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { user, logout, matches, reviews, getAccuracy } = useApp();
+  const { user, logout } = useAuth();
+  const { matches } = useMatchContext();
+  const { reviews, getAccuracy } = useReviewContext();
 
   const accuracy = getAccuracy();
 
@@ -76,18 +78,7 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <LinearGradient
-      colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-      style={styles.gradient}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 100 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
+    <ScreenContainer paddingTop={16} paddingBottom={100} contentStyle={styles.content}>
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
             <LinearGradient
@@ -169,18 +160,11 @@ export default function ProfileScreen() {
         />
 
         <Text style={styles.version}>Version 1.0.0</Text>
-      </ScrollView>
-    </LinearGradient>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   content: {
     paddingHorizontal: 20,
   },

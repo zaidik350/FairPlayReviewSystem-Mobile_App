@@ -1,36 +1,43 @@
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
+import FormContainer from '@/components/layout/FormContainer';
 import Colors from '@/constants/colors';
-import { useApp } from '@/context/AppContext';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { Lock, Mail, User, Zap } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SignupScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { login } = useApp();
+  const { signup } = useAuth();
   
-  const [name, setName] = useState('');
+  const [fname, setfName] = useState('');
+  const [lname, setlName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const getErrorMessage = (err: unknown): string => {
+    if (typeof err === 'string') return err;
+    if (err && typeof err === 'object') {
+      const maybeError = err as { message?: string };
+      if (typeof maybeError.message === 'string' && maybeError.message.trim()) {
+        return maybeError.message;
+      }
+    }
+    return 'Signup failed. Please try again.';
+  };
+
   const handleSignup = async () => {
-    if (!name || !email || !password) {
+    if (!fname || !lname || !email || !password) {
       setError('Please fill in all fields');
       return;
     }
@@ -44,31 +51,18 @@ export default function SignupScreen() {
     setError('');
     
     try {
-      await login(email, password, name);
+      await signup(fname,lname, email, password);
       router.replace('/(tabs)');
     } catch (err) {
-      setError('Signup failed. Please try again.');
+      console.log('Signup error:', err);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <LinearGradient
-      colors={[Colors.backgroundGradientStart, Colors.backgroundGradientEnd]}
-      style={styles.gradient}
-    >
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 20 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
+    <FormContainer contentStyle={styles.scrollContent}>
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               <View style={styles.logoRing}>
@@ -86,10 +80,19 @@ export default function SignupScreen() {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Input
-              label="Full Name"
+              label="First Name"
+              placeholder="Enter your first name"
+              value={fname}
+              onChangeText={setfName}
+              autoCapitalize="words"
+              icon={<User size={20} color={Colors.textSecondary} />}
+            />
+
+            <Input
+              label="Last Name"
               placeholder="Enter your name"
-              value={name}
-              onChangeText={setName}
+              value={lname}
+              onChangeText={setlName}
               autoCapitalize="words"
               icon={<User size={20} color={Colors.textSecondary} />}
             />
@@ -133,19 +136,11 @@ export default function SignupScreen() {
             <Text style={styles.footerText}>Fair Play • Integrity • Excellence</Text>
             <View style={styles.decorLine} />
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </LinearGradient>
+    </FormContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,

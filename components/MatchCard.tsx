@@ -1,5 +1,6 @@
 import Colors from '@/constants/colors';
 import { Match } from '@/types';
+import { getStatusLabel } from '@/utils/matchHelpers';
 import * as Haptics from 'expo-haptics';
 import { Calendar, ChevronRight, MapPin } from 'lucide-react-native';
 import React from 'react';
@@ -27,17 +28,6 @@ export default function MatchCard({ match, onPress }: MatchCardProps) {
     }
   };
 
-  const getStatusText = () => {
-    switch (match.status) {
-      case 'live':
-        return 'LIVE';
-      case 'upcoming':
-        return 'UPCOMING';
-      case 'completed':
-        return 'COMPLETED';
-    }
-  };
-
   return (
     <TouchableOpacity
       style={styles.container}
@@ -49,7 +39,7 @@ export default function MatchCard({ match, onPress }: MatchCardProps) {
         <View style={[styles.statusBadge, getStatusStyle()]}>
           {match.status === 'live' && <View style={styles.liveDot} />}
           <Text style={[styles.statusText, match.status === 'live' && styles.liveText]}>
-            {getStatusText()}
+            {getStatusLabel(match.status)}
           </Text>
         </View>
       </View>

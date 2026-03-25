@@ -23,6 +23,7 @@ interface InputProps {
   icon?: React.ReactNode;
   multiline?: boolean;
   numberOfLines?: number;
+  onFocus?: () => void;
 }
 
 export default function Input({
@@ -38,6 +39,7 @@ export default function Input({
   icon,
   multiline = false,
   numberOfLines = 1,
+  onFocus,
 }: InputProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -62,7 +64,10 @@ export default function Input({
           secureTextEntry={secureTextEntry && !showPassword}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
-          onFocus={() => setIsFocused(true)}
+          onFocus={() => {
+            setIsFocused(true);
+            onFocus?.();
+          }}
           onBlur={() => setIsFocused(false)}
           multiline={multiline}
           numberOfLines={numberOfLines}
