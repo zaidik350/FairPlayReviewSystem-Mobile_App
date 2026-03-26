@@ -1,6 +1,4 @@
-# FairPlayReviewSystem-Mobile_App
-
-Mobile frontend for AI-based cricket umpire review system.
+# Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 

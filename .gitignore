@@ -26,12 +26,21 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
+# Python
+__pycache__/
+*.pyc
+
 # macOS
 .DS_Store
 *.pem
 
 # local env files
+.env
+.env.*
+API/.env
 .env*.local
+!.env.example
+!API/.env.example
 
 # typescript
 *.tsbuildinfo

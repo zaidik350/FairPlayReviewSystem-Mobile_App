@@ -1,0 +1,25 @@
+export const Colors = {
+  background: '#0A0F0D',
+  backgroundGradientStart: '#0A1F15',
+  backgroundGradientEnd: '#050A08',
+  card: 'rgba(20, 35, 28, 0.85)',
+  cardBorder: 'rgba(0, 255, 136, 0.15)',
+  primary: '#00FF88',
+  primaryDim: '#00CC6A',
+  secondary: '#1A3D2E',
+  accent: '#00E676',
+  success: '#4CAF50',
+  destructive: '#FF4444',
+  warning: '#FFB800',
+  text: '#FFFFFF',
+  textSecondary: '#8A9A92',
+  textMuted: '#5A6A62',
+  inputBackground: 'rgba(30, 50, 40, 0.6)',
+  inputBorder: 'rgba(0, 255, 136, 0.3)',
+  overlay: 'rgba(0, 0, 0, 0.7)',
+  live: '#FF3B30',
+  out: '#00FF88',
+  notOut: '#FF4444',
+};
+
+export default Colors;
