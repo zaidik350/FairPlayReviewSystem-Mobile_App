@@ -1,50 +1,145 @@
-# Welcome to your Expo app 👋
+# FairPlayReviewSystem (Mobile App)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A comprehensive cricket analysis and fair play review mobile application built with **Expo (React Native)**. It integrates with **Supabase** (client-side) and a separate **FastAPI** backend for match/review workflows and video analysis.
 
-## Get started
+This repository is the **frontend/mobile app**.
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+### Match & review workflows
 
-2. Start the app
+- Authentication and user profile flows (Supabase + API)
+- Match management and review flows via the backend API
+- Notifications and user-scoped data access via authenticated API calls
 
-   ```bash
-   npx expo start
-   ```
+### Video analysis (Detection)
 
-In the output, you'll find options to open the app in a
+The app can upload videos for analysis via backend endpoints such as:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- `POST /api/analyze-video` (match-scoped analysis)
+- `POST /api/detect/ball`
+- `POST /api/detect/batsman`
+- `POST /api/detect/wicket`
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Note:
 
-## Get a fresh project
+- Backend analysis behavior is implemented server-side. This repo only includes the client integration and configuration.
 
-When you're ready, run:
+## Tech stack
+
+- **Mobile**: Expo, React Native, Expo Router, React Query, Supabase JS, React Native Paper
+- **Backend (separate service)**: FastAPI + Supabase (server-side)
+- **Storage/DB**: Supabase
+
+## Requirements
+
+- **Node.js** (LTS recommended) + **npm**
+- Windows, macOS, or Linux
+
+## Installation
+
+### Mobile app
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Environment variables
 
-## Learn more
+### Mobile app (`.env`)
 
-To learn more about developing your project with Expo, look at the following resources:
+Create from example:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+cp .env.example .env
+```
 
-## Join the community
+Variables:
 
-Join our community of developers creating universal apps.
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- `EXPO_PUBLIC_API_BASE_URL` (example: `http://localhost:8000/api`)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Quick start
+
+### Run the mobile app
+
+From the repo root:
+
+```bash
+npm run start
+```
+
+Other options:
+
+```bash
+npm run android
+npm run ios
+npm run web
+```
+
+## Backend API (separate service)
+
+This frontend expects a backend that provides endpoints under `EXPO_PUBLIC_API_BASE_URL`.
+
+If you’re running the backend locally, a common setup is:
+
+- Base URL: `http://localhost:8000/api`
+- Interactive docs: `http://localhost:8000/docs`
+
+Key endpoints used by the app may include:
+
+- `POST /analyze-video?match_id=<id>`
+- `POST /detect/ball`
+- `POST /detect/batsman`
+- `POST /detect/wicket`
+
+Backend setup, secrets, and ML pipeline details belong in the backend repository/documentation.
+
+## Connecting Mobile ↔ API
+
+For local development:
+
+- Set `EXPO_PUBLIC_API_BASE_URL=http://localhost:8000/api` in `.env`
+
+For device testing (phone), use one of:
+
+- Your machine LAN IP (example: `http://192.168.1.10:8000/api`)
+- ngrok public URL (example: `https://<id>.ngrok-free.app/api`)
+
+Restart Expo after changing `.env`.
+
+## Project structure
+
+```text
+.
+├── app/                     # Expo Router screens
+├── components/              # Mobile UI components
+├── hooks/                   # Mobile hooks (e.g., camera)
+├── services/                # Mobile service layer
+├── types/                   # Shared TS types
+├── assets/                  # Images/icons
+└── README.md
+```
+
+## Troubleshooting
+
+- **App can’t reach API on a real device**
+  - Don’t use `localhost`. Use LAN IP or ngrok.
+  - Ensure firewall allows inbound traffic to port `8000`.
+
+- **Expo env vars not updating**
+  - Ensure variables are prefixed with `EXPO_PUBLIC_`.
+  - Restart `expo start`.
+
+## Scripts
+
+- `npm run start`: start Expo dev server
+- `npm run android`: start + open Android
+- `npm run ios`: start + open iOS
+- `npm run web`: start web build
+- `npm run lint`: lint the mobile app
+
+## License
+
+Academic and demonstration use. Check individual component licenses (Expo, FastAPI, Supabase).
