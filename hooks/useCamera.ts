@@ -2,7 +2,7 @@
  * useCamera — encapsulates CameraView permission + facing logic.
  */
 
-import { CameraView, useCameraPermissions, type CameraType } from 'expo-camera';
+import { CameraView, useCameraPermissions, useMicrophonePermissions, type CameraType } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useRef, useState } from 'react';
 import { State } from 'react-native-gesture-handler';
@@ -11,6 +11,7 @@ export function useCamera() {
   const cameraRef = useRef<CameraView>(null);
   const pinchStartZoom = useRef(0);
   const [permission, requestPermission] = useCameraPermissions();
+  const [micPermission, requestMicPermission] = useMicrophonePermissions();
   const [facing, setFacing] = useState<CameraType>('back');
   const [zoom, setZoom] = useState(0);
 
@@ -49,6 +50,8 @@ export function useCamera() {
     cameraRef,
     permission,
     requestPermission,
+    micPermission,
+    requestMicPermission,
     facing,
     zoom,
     toggleFacing,

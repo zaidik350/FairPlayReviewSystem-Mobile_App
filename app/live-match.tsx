@@ -10,7 +10,7 @@ import { useCamera } from '@/hooks/useCamera';
 import { useRecording } from '@/hooks/useRecording';
 import { CameraView } from 'expo-camera';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import * as React from 'react';
 import {
     Alert,
     Platform,
@@ -27,8 +27,19 @@ export default function LiveMatchScreen() {
   const insets = useSafeAreaInsets();
   const { getMatchById, updateMatch } = useMatchContext();
 
-  const { cameraRef, permission, requestPermission, facing, zoom, toggleFacing, onPinchGesture, onPinchStateChange } = useCamera();
-  const [showReviewModal, setShowReviewModal] = useState(false);
+  const {
+    cameraRef,
+    permission,
+    requestPermission,
+    micPermission,
+    requestMicPermission,
+    facing,
+    zoom,
+    toggleFacing,
+    onPinchGesture,
+    onPinchStateChange,
+  } = useCamera();
+  const [showReviewModal, setShowReviewModal] = React.useState(false);
 
   const match = getMatchById(id || '');
 
@@ -90,7 +101,7 @@ export default function LiveMatchScreen() {
     );
   };
 
-  if (!permission) {
+  if (!permission || !micPermission) {
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>Loading camera...</Text>
@@ -98,18 +109,21 @@ export default function LiveMatchScreen() {
     );
   }
 
-  if (!permission.granted) {
+  if (!permission.granted || !micPermission.granted) {
     return (
       <View style={[styles.permissionContainer, { paddingTop: insets.top }]}>
         <Stack.Screen options={{ headerShown: false }} />
         <Card variant="glass" style={styles.permissionCard}>
-          <Text style={styles.permissionTitle}>Camera Access Required</Text>
+          <Text style={styles.permissionTitle}>Permissions Required</Text>
           <Text style={styles.permissionText}>
-            We need camera access to record deliveries for DRS review.
+            We need camera and microphone access to record deliveries for DRS review.
           </Text>
           <Button
             title="Grant Permission"
-            onPress={requestPermission}
+            onPress={async () => {
+              await requestPermission();
+              await requestMicPermission();
+            }}
             style={styles.permissionButton}
           />
           <Button
@@ -141,6 +155,11 @@ export default function LiveMatchScreen() {
     );
   }
 
+  const CameraViewWithRef =
+    CameraView as unknown as React.ForwardRefExoticComponent<
+      React.ComponentProps<typeof CameraView> & React.RefAttributes<CameraView>
+    >;
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -148,7 +167,7 @@ export default function LiveMatchScreen() {
       {Platform.OS !== 'web' ? (
         <PinchGestureHandler onGestureEvent={onPinchGesture} onHandlerStateChange={onPinchStateChange}>
           <View style={styles.camera}>
-            <CameraView
+            <CameraViewWithRef
               ref={cameraRef}
               style={styles.camera}
               facing={facing}
@@ -172,7 +191,7 @@ export default function LiveMatchScreen() {
                 onStart={start}
                 onStop={stop}
               />
-            </CameraView>
+            </CameraViewWithRef>
           </View>
         </PinchGestureHandler>
       ) : (

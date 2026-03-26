@@ -1,9 +1,9 @@
 import Colors from '@/constants/colors';
-import React from 'react';
+import * as React from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 
 interface CardProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   style?: ViewStyle;
   variant?: 'default' | 'elevated' | 'glass';
 }
