@@ -81,6 +81,15 @@ function RootLayoutNav() {
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="signup" options={{ headerShown: false }} />
       <Stack.Screen name="live-match" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="match-mode"
+        options={{ title: "Choose Control Mode" }}
+      />
+      <Stack.Screen name="camera-mode" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="umpire-console"
+        options={{ title: "Umpire Console" }}
+      />
       <Stack.Screen name="create-match" options={{ presentation: "modal" }} />
       <Stack.Screen name="match-details" options={{ title: "Match Details" }} />
       <Stack.Screen name="review-analysis" options={{ title: "DRS Review" }} />

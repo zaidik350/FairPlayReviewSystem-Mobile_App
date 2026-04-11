@@ -1,0 +1,122 @@
+import Button from "@/components/Button";
+import Card from "@/components/Card";
+import ScreenContainer from "@/components/layout/ScreenContainer";
+import Colors from "@/constants/colors";
+import { useMatchContext } from "@/context/MatchContext";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Camera, Gamepad2 } from "lucide-react-native";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+
+export default function MatchModeScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const { getMatchById } = useMatchContext();
+
+  const match = getMatchById(id || "");
+
+  if (!match) {
+    return (
+      <ScreenContainer contentStyle={styles.center}>
+        <Text style={styles.errorText}>Match not found.</Text>
+        <Button title="Back" variant="outline" onPress={() => router.back()} />
+      </ScreenContainer>
+    );
+  }
+
+  return (
+    <>
+      <Stack.Screen options={{ title: "Choose Control Mode" }} />
+      <ScreenContainer contentStyle={styles.content}>
+        <Card variant="elevated" style={styles.card}>
+          <Text style={styles.title}>Select Device Role</Text>
+          <Text style={styles.subtitle}>{match.name}</Text>
+          <Text style={styles.meta}>{match.teams}</Text>
+
+          <View style={styles.optionWrap}>
+            <Button
+              title="Open Camera Mode"
+              onPress={() => router.push(`/camera-mode?id=${match.id}`)}
+              icon={<Camera size={18} color={Colors.background} />}
+              style={styles.optionButton}
+            />
+            <Text style={styles.optionHint}>
+              Mounted phone: records and runs AI analysis.
+            </Text>
+          </View>
+
+          <View style={styles.optionWrap}>
+            <Button
+              title="Open Umpire Console"
+              onPress={() => router.push(`/umpire-console?id=${match.id}`)}
+              icon={<Gamepad2 size={18} color={Colors.background} />}
+              style={styles.optionButton}
+            />
+            <Text style={styles.optionHint}>
+              Hand phone: sends commands and shows outcomes live.
+            </Text>
+          </View>
+
+          <Button
+            title="Back to Match"
+            variant="outline"
+            onPress={() => router.back()}
+            style={styles.backButton}
+          />
+        </Card>
+      </ScreenContainer>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    padding: 20,
+    justifyContent: "center",
+    flexGrow: 1,
+  },
+  center: {
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    flexGrow: 1,
+  },
+  card: {
+    padding: 20,
+    gap: 14,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  subtitle: {
+    color: Colors.primary,
+    fontSize: 15,
+    fontWeight: "600" as const,
+  },
+  meta: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  optionWrap: {
+    gap: 6,
+    marginTop: 6,
+  },
+  optionButton: {
+    minHeight: 52,
+  },
+  optionHint: {
+    color: Colors.textMuted,
+    fontSize: 12,
+    marginHorizontal: 4,
+  },
+  backButton: {
+    marginTop: 8,
+  },
+  errorText: {
+    color: Colors.text,
+    marginBottom: 12,
+  },
+});

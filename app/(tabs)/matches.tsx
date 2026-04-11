@@ -1,37 +1,38 @@
-import Button from '@/components/Button';
-import MatchCard from '@/components/MatchCard';
-import ScreenContainer from '@/components/layout/ScreenContainer';
-import Colors from '@/constants/colors';
-import { useMatchContext } from '@/context/MatchContext';
-import type { Match } from '@/types';
-import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
-import { Filter, Plus } from 'lucide-react-native';
-import React, { useState } from 'react';
+import Button from "@/components/Button";
+import MatchCard from "@/components/MatchCard";
+import ScreenContainer from "@/components/layout/ScreenContainer";
+import Colors from "@/constants/colors";
+import { useMatchContext } from "@/context/MatchContext";
+import type { Match } from "@/types";
+import * as Haptics from "expo-haptics";
+import { useRouter } from "expo-router";
+import { Filter, Plus } from "lucide-react-native";
+import React, { useState } from "react";
 import {
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-type FilterType = 'all' | 'live' | 'upcoming' | 'completed';
+type FilterType = "all" | "live" | "upcoming" | "completed";
 
 export default function MatchesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { matches, getLiveMatches, getUpcomingMatches, getCompletedMatches } = useMatchContext();
-  const [filter, setFilter] = useState<FilterType>('all');
+  const { matches, getLiveMatches, getUpcomingMatches, getCompletedMatches } =
+    useMatchContext();
+  const [filter, setFilter] = useState<FilterType>("all");
 
   const getFilteredMatches = () => {
     switch (filter) {
-      case 'live':
+      case "live":
         return getLiveMatches();
-      case 'upcoming':
+      case "upcoming":
         return getUpcomingMatches();
-      case 'completed':
+      case "completed":
         return getCompletedMatches();
       default:
         return matches;
@@ -43,9 +44,13 @@ export default function MatchesScreen() {
     setFilter(newFilter);
   };
 
-  const handleMatchPress = (matchId: string, status: string, pitchConfigured?: boolean) => {
-    if (status === 'live' && pitchConfigured) {
-      router.push(`/live-match?id=${matchId}`);
+  const handleMatchPress = (
+    matchId: string,
+    status: string,
+    pitchConfigured?: boolean,
+  ) => {
+    if (status === "live" && pitchConfigured) {
+      router.push(`/match-mode?id=${matchId}`);
     } else {
       router.push(`/match-details?id=${matchId}`);
     }
@@ -53,10 +58,10 @@ export default function MatchesScreen() {
 
   const filteredMatches = getFilteredMatches();
   const filters: { key: FilterType; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'live', label: 'Live' },
-    { key: 'upcoming', label: 'Upcoming' },
-    { key: 'completed', label: 'Completed' },
+    { key: "all", label: "All" },
+    { key: "live", label: "Live" },
+    { key: "upcoming", label: "Upcoming" },
+    { key: "completed", label: "Completed" },
   ];
 
   return (
@@ -65,7 +70,7 @@ export default function MatchesScreen() {
         <Text style={styles.title}>Matches</Text>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => router.push('/create-match')}
+          onPress={() => router.push("/create-match")}
         >
           <Plus size={22} color={Colors.background} />
         </TouchableOpacity>
@@ -94,9 +99,11 @@ export default function MatchesScreen() {
               >
                 {f.label}
               </Text>
-              {f.key === 'live' && getLiveMatches().length > 0 && (
+              {f.key === "live" && getLiveMatches().length > 0 && (
                 <View style={styles.liveBadge}>
-                  <Text style={styles.liveBadgeText}>{getLiveMatches().length}</Text>
+                  <Text style={styles.liveBadgeText}>
+                    {getLiveMatches().length}
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -117,14 +124,14 @@ export default function MatchesScreen() {
             <Filter size={48} color={Colors.textMuted} />
             <Text style={styles.emptyTitle}>No matches found</Text>
             <Text style={styles.emptySubtitle}>
-              {filter === 'all'
-                ? 'Create a new match to get started'
+              {filter === "all"
+                ? "Create a new match to get started"
                 : `No ${filter} matches at the moment`}
             </Text>
-            {filter === 'all' && (
+            {filter === "all" && (
               <Button
                 title="Create Match"
-                onPress={() => router.push('/create-match')}
+                onPress={() => router.push("/create-match")}
                 variant="outline"
                 style={styles.emptyButton}
               />
@@ -135,7 +142,9 @@ export default function MatchesScreen() {
             <MatchCard
               key={match.id}
               match={match}
-              onPress={() => handleMatchPress(match.id, match.status, match.pitchConfigured)}
+              onPress={() =>
+                handleMatchPress(match.id, match.status, match.pitchConfigured)
+              }
             />
           ))
         )}
@@ -149,15 +158,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingBottom: 16,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700' as const,
+    fontWeight: "700" as const,
     color: Colors.text,
   },
   addButton: {
@@ -165,8 +174,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   filterContainer: {
     marginBottom: 16,
@@ -176,8 +185,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
@@ -192,7 +201,7 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: 14,
-    fontWeight: '500' as const,
+    fontWeight: "500" as const,
     color: Colors.textSecondary,
   },
   filterTextActive: {
@@ -206,7 +215,7 @@ const styles = StyleSheet.create({
   },
   liveBadgeText: {
     fontSize: 10,
-    fontWeight: '700' as const,
+    fontWeight: "700" as const,
     color: Colors.text,
   },
   container: {
@@ -216,13 +225,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 60,
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '600' as const,
+    fontWeight: "600" as const,
     color: Colors.text,
     marginTop: 16,
   },
@@ -230,7 +239,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
     marginTop: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   emptyButton: {
     marginTop: 24,
