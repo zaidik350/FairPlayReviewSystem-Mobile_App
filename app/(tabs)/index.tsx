@@ -1,5 +1,6 @@
 import Card from '@/components/Card';
 import ScreenContainer from '@/components/layout/ScreenContainer';
+import { HomeDataSkeleton } from '@/components/skeleton/ScreenSkeletons';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useMatchContext } from '@/context/MatchContext';
@@ -28,10 +29,11 @@ import {
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { getLiveMatches } = useMatchContext();
-  const { reviews } = useReviewContext();
+  const { getLiveMatches, isLoadingMatches } = useMatchContext();
+  const { reviews, isLoadingReviews } = useReviewContext();
 
   const liveMatches = getLiveMatches();
+  const dataLoading = isLoadingMatches || isLoadingReviews;
 
   const handlePress = (action: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -58,6 +60,10 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer paddingTop={16} paddingBottom={100} contentStyle={styles.content}>
+        {dataLoading ? (
+          <HomeDataSkeleton />
+        ) : (
+          <>
         <View style={styles.header}>
           <View style={styles.headerTextContainer}>
             <Text style={styles.greeting}>Hi, {user?.name || 'Umpire'}</Text>
@@ -185,6 +191,8 @@ export default function HomeScreen() {
             before making your final decision.
           </Text>
         </Card>
+          </>
+        )}
     </ScreenContainer>
   );
 }

@@ -2,6 +2,8 @@ import ReviewCard from '@/components/ReviewCard';
 import FilterPills, { type FilterItem } from '@/components/filters/FilterPills';
 import MatchDropdown from '@/components/filters/MatchDropdown';
 import ScreenContainer from '@/components/layout/ScreenContainer';
+import { ReviewsScreenSkeleton } from '@/components/skeleton/ScreenSkeletons';
+import { Skeleton } from '@/components/skeleton/Skeleton';
 import Colors from '@/constants/colors';
 import { useMatchContext } from '@/context/MatchContext';
 import { useReviewContext } from '@/context/ReviewContext';
@@ -24,8 +26,9 @@ type MatchFilterType = 'all' | string;
 export default function ReviewsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { reviews, refreshReviews } = useReviewContext();
-  const { matches } = useMatchContext();
+  const { reviews, refreshReviews, isLoadingReviews } = useReviewContext();
+  const { matches, isLoadingMatches } = useMatchContext();
+  const listDataLoading = isLoadingReviews || isLoadingMatches;
   const [filter, setFilter] = useState<FilterType>('all');
   const [matchFilter, setMatchFilter] = useState<MatchFilterType>('all');
 
@@ -72,9 +75,26 @@ export default function ReviewsScreen() {
     <ScreenContainer scroll={false} safeArea={false}>
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={styles.title}>Reviews</Text>
-        <Text style={styles.subtitle}>{reviews.length} total decisions</Text>
+        {listDataLoading ? (
+          <Skeleton width={160} height={14} borderRadius={4} style={{ marginTop: 6 }} />
+        ) : (
+          <Text style={styles.subtitle}>{reviews.length} total decisions</Text>
+        )}
       </View>
 
+      {listDataLoading ? (
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: insets.bottom + 100 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <ReviewsScreenSkeleton />
+        </ScrollView>
+      ) : (
+        <>
       <MatchDropdown
         value={matchFilter}
         options={matchDropdownOptions}
@@ -113,6 +133,8 @@ export default function ReviewsScreen() {
           ))
         )}
       </ScrollView>
+        </>
+      )}
     </ScreenContainer>
   );
 }

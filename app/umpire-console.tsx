@@ -1,11 +1,13 @@
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ReviewPromptModal from "@/components/camera/ReviewPromptModal";
+import ReviewCard from "@/components/ReviewCard";
 import ScreenContainer from "@/components/layout/ScreenContainer";
-import DecisionResult from "@/components/review/DecisionResult";
+import { UmpireConsoleSkeleton } from "@/components/skeleton/ScreenSkeletons";
 import AppColors from "@/constants/colors";
 import { useAuth } from "@/context/AuthContext";
 import { useMatchContext } from "@/context/MatchContext";
+import { useReviewContext } from "@/context/ReviewContext";
 import { getOrCreateDeviceId } from "@/services/matchSync/deviceIdentity";
 import { matchSyncService } from "@/services/matchSync/matchSyncService";
 import type {
@@ -14,7 +16,7 @@ import type {
     OriginalDecision,
     ReviewRealtimeRow,
 } from "@/services/matchSync/types";
-import { DecisionType } from "@/types";
+import type { Review } from "@/types";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
@@ -24,11 +26,32 @@ function isOnline(lastSeenAt: string | null) {
   return Date.now() - new Date(lastSeenAt).getTime() <= 20000;
 }
 
+function reviewRowToReview(
+  row: ReviewRealtimeRow,
+  matchId: string,
+  fallbackMatchName: string,
+): Review {
+  return {
+    id: String(row.id),
+    matchId,
+    matchName: (row.match_name?.trim() || fallbackMatchName) as string,
+    over: row.over ?? "",
+    originalDecision: (row.original_decision ?? "NOT OUT") as Review["originalDecision"],
+    decision: (row.decision ?? "NOT OUT") as Review["decision"],
+    impact: (row.impact as Review["impact"]) ?? "In-line",
+    pitch: (row.pitch as Review["pitch"]) ?? "In-line",
+    wickets: (row.wickets as Review["wickets"]) ?? "Missing",
+    videoUri: row.video_uri ?? "",
+    timestamp: row.created_at ?? new Date().toISOString(),
+  };
+}
+
 export default function UmpireConsoleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  const { getMatchById } = useMatchContext();
+  const { getMatchById, isLoadingMatches } = useMatchContext();
+  const { refreshReviews } = useReviewContext();
 
   const [deviceId, setDeviceId] = React.useState("");
   const [liveState, setLiveState] = React.useState<MatchLiveState | null>(null);
@@ -91,35 +114,15 @@ export default function UmpireConsoleScreen() {
       try {
         const did = await getOrCreateDeviceId();
         setDeviceId(did);
-        console.log(
-          "[UmpireConsole][mode] role=umpire deviceId=",
-          did,
-          "matchId=",
-          id,
-          "userId=",
-          user.id,
-        );
 
         const state = await matchSyncService.ensureLiveState(id, user.id);
         setLiveState(state);
-        console.log("[UmpireConsole][state:init]", state);
         await matchSyncService.assignRole(id, "umpire", did);
 
         const review = await matchSyncService.getLatestReviewForMatch(id);
         setLatestReview(review);
 
         unsub = matchSyncService.subscribeLiveState(id, (stateUpdate) => {
-          console.log("[UmpireConsole][state:update]", {
-            matchId: stateUpdate.match_id,
-            isRecording: stateUpdate.is_recording,
-            clipStatus: stateUpdate.clip_status,
-            cameraDevice: stateUpdate.controlled_by_device_id,
-            umpireDevice: stateUpdate.umpire_device_id,
-            cameraLastSeenAt: stateUpdate.camera_last_seen_at,
-            umpireLastSeenAt: stateUpdate.umpire_last_seen_at,
-            pendingClipId: stateUpdate.pending_clip_id,
-            lastError: stateUpdate.last_error,
-          });
           setLiveState(stateUpdate);
 
           if (
@@ -144,11 +147,11 @@ export default function UmpireConsoleScreen() {
         );
         hb = setInterval(() => {
           matchSyncService.heartbeat(id, "umpire").catch((error) => {
-            console.log("[UmpireConsole][heartbeat] failed", error);
+            console.error("[UmpireConsole][heartbeat] failed", error);
           });
         }, 7000);
       } catch (error: any) {
-        console.log("[UmpireConsole][init] failed", error);
+        console.error("[UmpireConsole][init] failed", error);
         setSyncError(
           error?.message || "Failed to connect Umpire Console realtime sync.",
         );
@@ -169,10 +172,6 @@ export default function UmpireConsoleScreen() {
     ) => {
       if (!id || !user?.id || !deviceId) return;
       if (commandLock === type) {
-        console.log("[UmpireConsole][publishCommand] blocked by lock", {
-          type,
-          commandLock,
-        });
         return false;
       }
 
@@ -180,11 +179,6 @@ export default function UmpireConsoleScreen() {
       const now = Date.now();
       const previousAt = recentCommandsRef.current.get(dedupeKey) ?? 0;
       if (now - previousAt < 650) {
-        console.log("[UmpireConsole][publishCommand] deduped", {
-          type,
-          payload,
-          dedupeKey,
-        });
         return false;
       }
 
@@ -192,13 +186,6 @@ export default function UmpireConsoleScreen() {
 
       try {
         setSending(true);
-        console.log("[UmpireConsole][publishCommand] sending", {
-          type,
-          payload,
-          matchId: id,
-          userId: user.id,
-          deviceId,
-        });
         await matchSyncService.publishCommand({
           matchId: id,
           userId: user.id,
@@ -206,11 +193,10 @@ export default function UmpireConsoleScreen() {
           type,
           payload: payload as never,
         });
-        console.log("[UmpireConsole][publishCommand] sent", { type, payload });
         setSyncError("");
         return true;
       } catch (error: any) {
-        console.log("[UmpireConsole][publishCommand] failed", error);
+        console.error("[UmpireConsole][publishCommand] failed", error);
         setSyncError(error?.message || "Failed to send command.");
         return false;
       } finally {
@@ -290,9 +276,11 @@ export default function UmpireConsoleScreen() {
   const showReviewPrompt = liveState?.clip_status === "pending_decision";
   const showReviewLoading =
     reviewRequested || liveState?.clip_status === "reviewing";
-  const canShowDecisionResult =
-    !!liveState?.last_review_decision &&
-    !!liveState?.last_review_original_decision;
+
+  React.useEffect(() => {
+    if (!latestReview?.id) return;
+    void refreshReviews();
+  }, [latestReview?.id, refreshReviews]);
 
   React.useEffect(() => {
     if (!liveState) return;
@@ -305,45 +293,14 @@ export default function UmpireConsoleScreen() {
     }
   }, [liveState]);
 
-  React.useEffect(() => {
-    if (!liveState) return;
-    console.log("[UmpireConsole][startButton]", {
-      disabled: !canStart || sending,
-      reason: getStartDisabledReason(),
-      isRecordingLive: liveState.is_recording,
-      isRecordingEffective: effectiveIsRecording,
-      clipStatus: liveState.clip_status,
-      commandLock,
-      cameraOnline,
-      cameraDeviceId: liveState.controlled_by_device_id,
-      umpireDeviceId: liveState.umpire_device_id,
-      localDeviceId: deviceId,
-    });
-    console.log("[UmpireConsole][endButton]", {
-      disabled: !canEnd || sending,
-      reason: getEndDisabledReason(),
-      isRecordingLive: liveState.is_recording,
-      isRecordingEffective: effectiveIsRecording,
-      clipStatus: liveState.clip_status,
-      commandLock,
-    });
-  }, [
-    cameraOnline,
-    canEnd,
-    canStart,
-    commandLock,
-    deviceId,
-    effectiveIsRecording,
-    getEndDisabledReason,
-    getStartDisabledReason,
-    liveState,
-    sending,
-  ]);
-
   return (
     <>
       <Stack.Screen options={{ title: "Umpire Console" }} />
-      {!match ? (
+      {isLoadingMatches ? (
+        <ScreenContainer contentStyle={styles.content}>
+          <UmpireConsoleSkeleton />
+        </ScreenContainer>
+      ) : !match ? (
         <ScreenContainer contentStyle={styles.center}>
           <Text style={styles.error}>Match not found.</Text>
           <Button
@@ -358,10 +315,6 @@ export default function UmpireConsoleScreen() {
             <Text style={styles.title}>{match.name}</Text>
             <Text style={styles.subtle}>{match.teams}</Text>
             <View style={styles.topRow}>
-              <Text style={styles.scoreText}>
-                Over {liveState?.over_number ?? 0}.
-                {liveState?.legal_balls_this_over ?? 0}
-              </Text>
               <Text
                 style={[
                   styles.connection,
@@ -406,31 +359,25 @@ export default function UmpireConsoleScreen() {
             </Text>
           </Card>
 
-          <Card variant="elevated" style={styles.resultCard}>
-            <Text style={styles.resultTitle}>Latest Review Output</Text>
-            {canShowDecisionResult ? (
-              <DecisionResult
-                decision={liveState.last_review_decision as DecisionType}
-                originalDecision={
-                  liveState.last_review_original_decision as DecisionType
-                }
+          <View style={styles.reviewSection}>
+            <Text style={styles.resultTitle}>Latest Review</Text>
+            {latestReview ? (
+              <ReviewCard
+                review={reviewRowToReview(
+                  latestReview,
+                  String(match.id),
+                  match.name,
+                )}
+                showMediaPreview
+                onPress={async () => {
+                  await refreshReviews();
+                  router.push(`/review-detail?id=${latestReview.id}`);
+                }}
               />
             ) : (
               <Text style={styles.resultLine}>No completed review yet.</Text>
             )}
-            <Text style={styles.resultLine}>
-              Impact: {latestReview?.impact ?? "-"}
-            </Text>
-            <Text style={styles.resultLine}>
-              Pitch: {latestReview?.pitch ?? "-"}
-            </Text>
-            <Text style={styles.resultLine}>
-              Wickets: {latestReview?.wickets ?? "-"}
-            </Text>
-            <Text style={styles.resultLine}>
-              Over: {latestReview?.over ?? "-"}
-            </Text>
-          </Card>
+          </View>
 
           <Button
             title="Back"
@@ -441,20 +388,26 @@ export default function UmpireConsoleScreen() {
       )}
 
       <ReviewPromptModal
-        visible={showReviewPrompt}
+        visible={showReviewPrompt && !reviewRequested}
         onDismiss={handleDiscard}
         onSubmit={(decision) => {
           void handleDecision(decision);
         }}
       />
 
-      <Modal visible={showReviewLoading} transparent animationType="fade">
+      <Modal
+        visible={showReviewLoading}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+      >
         <View style={styles.loadingOverlay}>
           <Card variant="elevated" style={styles.loadingCard}>
             <ActivityIndicator size="large" color={AppColors.primary} />
-            <Text style={styles.loadingTitle}>Review In Progress</Text>
+            <Text style={styles.loadingTitle}>Analyzing review</Text>
             <Text style={styles.loadingSubtitle}>
-              Umpire requested review. Waiting for camera analysis result...
+              AI is analyzing this delivery on the backend. Keep this screen
+              open until the result appears.
             </Text>
           </Card>
         </View>
@@ -482,9 +435,8 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 10,
   },
-  resultCard: {
-    padding: 14,
-    gap: 6,
+  reviewSection: {
+    gap: 10,
   },
   loadingOverlay: {
     flex: 1,
@@ -521,14 +473,9 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     alignItems: "center",
     marginTop: 6,
-  },
-  scoreText: {
-    color: AppColors.primary,
-    fontWeight: "700" as const,
-    fontSize: 18,
   },
   connection: {
     fontSize: 12,

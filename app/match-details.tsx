@@ -3,6 +3,7 @@ import Card from "@/components/Card";
 import Input from "@/components/Input";
 import ScreenContainer from "@/components/layout/ScreenContainer";
 import PitchConfigModal from "@/components/match/PitchConfigModal";
+import { MatchDetailSkeleton } from "@/components/skeleton/ScreenSkeletons";
 import ReviewCard from "@/components/ReviewCard";
 import AppColors from "@/constants/colors";
 import { useMatchContext } from "@/context/MatchContext";
@@ -39,7 +40,7 @@ export default function MatchDetailsScreen() {
     openPitchConfig?: string;
   }>();
   const router = useRouter();
-  const { getMatchById, updateMatch, deleteMatch, syncPitchConfig } =
+  const { getMatchById, updateMatch, deleteMatch, syncPitchConfig, isLoadingMatches } =
     useMatchContext();
   const { getReviewsByMatch } = useReviewContext();
   const [isEditing, setIsEditing] = useState(false);
@@ -140,6 +141,24 @@ export default function MatchDetailsScreen() {
       setShowPitchConfigModal(true);
     }
   }, [match, openPitchConfig]);
+
+  if (isLoadingMatches) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: "Match Details",
+            headerStyle: { backgroundColor: Colors.background },
+            headerTintColor: Colors.text,
+            headerShadowVisible: false,
+          }}
+        />
+        <ScreenContainer paddingBottom={100} contentStyle={styles.content}>
+          <MatchDetailSkeleton />
+        </ScreenContainer>
+      </>
+    );
+  }
 
   if (!match) {
     return (

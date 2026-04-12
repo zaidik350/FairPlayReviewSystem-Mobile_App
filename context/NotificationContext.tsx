@@ -17,6 +17,7 @@ const DEFAULT_NOTIFICATIONS: NotificationSettings = {
 
 export const [NotificationProvider, useNotificationContext] = createContextHook(() => {
   const [notifications, setNotifications] = useState<NotificationSettings>(DEFAULT_NOTIFICATIONS);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
   const { isLoggedIn, isLoading } = useAuth();
 
   /* Load notification settings only when the user is authenticated */
@@ -25,17 +26,25 @@ export const [NotificationProvider, useNotificationContext] = createContextHook(
 
     if (!isLoggedIn) {
       setNotifications(DEFAULT_NOTIFICATIONS);
+      setIsLoadingNotifications(false);
       return;
     }
 
+    let cancelled = false;
     (async () => {
+      setIsLoadingNotifications(true);
       try {
         const data = await userService.getNotificationSettings();
-        setNotifications(data);
+        if (!cancelled) setNotifications(data);
       } catch (e) {
         console.log('Error loading notifications:', e);
+      } finally {
+        if (!cancelled) setIsLoadingNotifications(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [isLoggedIn, isLoading]);
 
   const updateNotifications = useCallback(async (updates: Partial<NotificationSettings>) => {
@@ -43,5 +52,5 @@ export const [NotificationProvider, useNotificationContext] = createContextHook(
     setNotifications(updated);
   }, []);
 
-  return { notifications, updateNotifications };
+  return { notifications, isLoadingNotifications, updateNotifications };
 });

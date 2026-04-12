@@ -1,6 +1,7 @@
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ScreenContainer from "@/components/layout/ScreenContainer";
+import { MatchModeSkeleton } from "@/components/skeleton/ScreenSkeletons";
 import AppColors from "@/constants/colors";
 import { useAuth } from "@/context/AuthContext";
 import { useMatchContext } from "@/context/MatchContext";
@@ -23,7 +24,7 @@ export default function CameraModeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  const { getMatchById } = useMatchContext();
+  const { getMatchById, isLoadingMatches } = useMatchContext();
   const { addReview } = useReviewContext();
   const match = getMatchById(id || "");
 
@@ -62,7 +63,7 @@ export default function CameraModeScreen() {
               pending_clip_id: `${Date.now()}`,
             });
           } catch (error) {
-            console.log(
+            console.error(
               "[CameraMode][onRecordingComplete] update pending ref failed",
               error,
             );
@@ -85,30 +86,12 @@ export default function CameraModeScreen() {
       try {
         const did = await getOrCreateDeviceId();
         setDeviceId(did);
-        console.log(
-          "[CameraMode][mode] role=camera deviceId=",
-          did,
-          "matchId=",
-          id,
-          "userId=",
-          user.id,
-        );
 
         const seeded = await matchSyncService.ensureLiveState(id, user.id);
         setLiveState(seeded);
-        console.log("[CameraMode][state:init]", seeded);
         await matchSyncService.assignRole(id, "camera", did);
 
         liveUnsub = matchSyncService.subscribeLiveState(id, (stateUpdate) => {
-          console.log("[CameraMode][state:update]", {
-            matchId: stateUpdate.match_id,
-            isRecording: stateUpdate.is_recording,
-            clipStatus: stateUpdate.clip_status,
-            cameraDevice: stateUpdate.controlled_by_device_id,
-            umpireDevice: stateUpdate.umpire_device_id,
-            pendingClipId: stateUpdate.pending_clip_id,
-            lastError: stateUpdate.last_error,
-          });
           setLiveState(stateUpdate);
         });
         commandUnsub = matchSyncService.subscribeCommands(id, (cmd) => {
@@ -119,31 +102,21 @@ export default function CameraModeScreen() {
           const now = Date.now();
           const prevTs = recentCommandSignatureRef.current.get(signature) ?? 0;
           if (now - prevTs < 650) {
-            console.log("[CameraMode][command] deduped", {
-              cmdId,
-              type: cmd.type,
-              payload: cmd.payload,
-            });
             processedCommandIdsRef.current.add(cmdId);
             return;
           }
 
-          console.log("[CameraMode][command] queued", {
-            cmdId,
-            type: cmd.type,
-            payload: cmd.payload,
-          });
           recentCommandSignatureRef.current.set(signature, now);
           setQueue((prev) => [...prev, cmd]);
         });
 
         hb = setInterval(() => {
           matchSyncService.heartbeat(id, "camera").catch((error) => {
-            console.log("[CameraMode][heartbeat] failed", error);
+            console.error("[CameraMode][heartbeat] failed", error);
           });
         }, 7000);
       } catch (error: any) {
-        console.log("[CameraMode][init] failed", error);
+        console.error("[CameraMode][init] failed", error);
         setSyncError(
           error?.message || "Failed to connect Camera Mode realtime sync.",
         );
@@ -165,29 +138,12 @@ export default function CameraModeScreen() {
       const current = liveStateRef.current;
       if (!current) return;
 
-      console.log("[CameraMode][command] processing", {
-        commandId: command.id,
-        type,
-        payload: command.payload,
-        stateBefore: {
-          isRecording: current.is_recording,
-          clipStatus: current.clip_status,
-          pendingClipId: current.pending_clip_id,
-        },
-      });
-
       if (type === "START_RECORDING") {
         if (
           isRecording ||
           current.is_recording ||
           current.clip_status === "recording"
         ) {
-          console.log("[CameraMode][START_RECORDING] ignored", {
-            reason: "already recording",
-            localIsRecording: isRecording,
-            liveIsRecording: current.is_recording,
-            clipStatus: current.clip_status,
-          });
           return;
         }
 
@@ -204,11 +160,6 @@ export default function CameraModeScreen() {
 
       if (type === "END_DELIVERY") {
         if (!isRecording && !current.is_recording) {
-          console.log("[CameraMode][END_DELIVERY] ignored", {
-            reason: "camera not recording",
-            localIsRecording: isRecording,
-            liveIsRecording: current.is_recording,
-          });
           await matchSyncService.updateLiveState(id, {
             last_error:
               "END_DELIVERY ignored because camera was not recording.",
@@ -234,10 +185,6 @@ export default function CameraModeScreen() {
           | null;
         if (!originalDecision) return;
         if (!pendingClipUriRef.current) {
-          console.log("[CameraMode][REQUEST_REVIEW] blocked", {
-            reason: "pending clip missing",
-            clipStatus: current.clip_status,
-          });
           await matchSyncService.updateLiveState(id, {
             clip_status: "error",
             last_error: "Review requested without pending clip.",
@@ -279,7 +226,7 @@ export default function CameraModeScreen() {
             last_error: null,
           });
         } catch (error: any) {
-          console.log("[CameraMode][REQUEST_REVIEW] failed", error);
+          console.error("[CameraMode][REQUEST_REVIEW] failed", error);
           await matchSyncService.updateLiveState(id, {
             clip_status: "error",
             last_error: error?.message || "Review analysis failed.",
@@ -289,7 +236,6 @@ export default function CameraModeScreen() {
       }
 
       if (type === "DISCARD_LAST_CLIP") {
-        console.log("[CameraMode][DISCARD_LAST_CLIP] clearing pending clip");
         pendingClipUriRef.current = null;
         reset();
 
@@ -365,6 +311,17 @@ export default function CameraModeScreen() {
           />
         </Card>
       </ScreenContainer>
+    );
+  }
+
+  if (isLoadingMatches) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ScreenContainer contentStyle={styles.center}>
+          <MatchModeSkeleton />
+        </ScreenContainer>
+      </>
     );
   }
 

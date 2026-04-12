@@ -193,7 +193,7 @@ export const matchSyncService = {
     const { data, error } = await supabaseClient
       .from(REVIEWS_TABLE)
       .select(
-        "id,match_id,over,original_decision,decision,impact,pitch,wickets,created_at",
+        "id,match_id,match_name,over,original_decision,decision,impact,pitch,wickets,video_uri,created_at",
       )
       .eq("match_id", dbMatchId)
       .order("created_at", { ascending: false })

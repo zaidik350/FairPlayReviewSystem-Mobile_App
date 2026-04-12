@@ -13,6 +13,11 @@ const LOCAL_API_BASE_URL =
   process.env.EXPO_PUBLIC_LOCAL_API_BASE_URL || "http://localhost:8000/api";
 const LAN_API_BASE_URL = process.env.EXPO_PUBLIC_LAN_API_BASE_URL || "";
 
+/** Multipart /analyze-video can exceed default JSON timeouts; ngrok free tier also struggles with large/slow uploads. */
+const UPLOAD_TIMEOUT_MS = Number(
+  process.env.EXPO_PUBLIC_UPLOAD_TIMEOUT_MS || "180000",
+);
+
 export const API_CONFIG = {
   BASE_URL: isDevelopment
     ? DEV_API_BASE_URL
@@ -21,6 +26,9 @@ export const API_CONFIG = {
   LOCAL_URL: LOCAL_API_BASE_URL,
   LAN_URL: LAN_API_BASE_URL,
   TIMEOUT: 30000,
+  UPLOAD_TIMEOUT_MS: Number.isFinite(UPLOAD_TIMEOUT_MS)
+    ? UPLOAD_TIMEOUT_MS
+    : 180000,
   /** Set to true to use the real FastAPI backend */
   USE_REAL_API: true,
 };

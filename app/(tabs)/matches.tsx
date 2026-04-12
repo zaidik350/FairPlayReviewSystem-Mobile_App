@@ -1,6 +1,7 @@
 import Button from "@/components/Button";
 import MatchCard from "@/components/MatchCard";
 import ScreenContainer from "@/components/layout/ScreenContainer";
+import { MatchesListSkeleton } from "@/components/skeleton/ScreenSkeletons";
 import Colors from "@/constants/colors";
 import { useMatchContext } from "@/context/MatchContext";
 import type { Match } from "@/types";
@@ -22,8 +23,13 @@ type FilterType = "all" | "live" | "upcoming" | "completed";
 export default function MatchesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { matches, getLiveMatches, getUpcomingMatches, getCompletedMatches } =
-    useMatchContext();
+  const {
+    matches,
+    isLoadingMatches,
+    getLiveMatches,
+    getUpcomingMatches,
+    getCompletedMatches,
+  } = useMatchContext();
   const [filter, setFilter] = useState<FilterType>("all");
 
   const getFilteredMatches = () => {
@@ -119,7 +125,9 @@ export default function MatchesScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {filteredMatches.length === 0 ? (
+        {isLoadingMatches ? (
+          <MatchesListSkeleton />
+        ) : filteredMatches.length === 0 ? (
           <View style={styles.emptyState}>
             <Filter size={48} color={Colors.textMuted} />
             <Text style={styles.emptyTitle}>No matches found</Text>

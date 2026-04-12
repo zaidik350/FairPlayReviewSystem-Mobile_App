@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 export const [MatchProvider, useMatchContext] = createContextHook(() => {
   const [matches, setMatches] = useState<Match[]>([]);
+  const [isLoadingMatches, setIsLoadingMatches] = useState(true);
   const { isLoggedIn, isLoading } = useAuth();
 
   /* Load matches only for authenticated user */
@@ -18,17 +19,25 @@ export const [MatchProvider, useMatchContext] = createContextHook(() => {
     if (isLoading) return;
     if (!isLoggedIn) {
       setMatches([]);
+      setIsLoadingMatches(false);
       return;
     }
 
+    let cancelled = false;
     (async () => {
+      setIsLoadingMatches(true);
       try {
         const data = await matchService.getAll();
-        setMatches(data);
+        if (!cancelled) setMatches(data);
       } catch (e) {
         console.log('Error loading matches:', e);
+      } finally {
+        if (!cancelled) setIsLoadingMatches(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [isLoggedIn, isLoading]);
 
   const refreshMatches = useCallback(async () => {
@@ -110,5 +119,18 @@ export const [MatchProvider, useMatchContext] = createContextHook(() => {
   const getUpcomingMatches = useCallback(() => matches.filter(m => m.status === 'upcoming'), [matches]);
   const getCompletedMatches = useCallback(() => matches.filter(m => m.status === 'completed'), [matches]);
 
-  return { matches, addMatch, updateMatch, deleteMatch, configurePitch, syncPitchConfig, refreshMatches, getMatchById, getLiveMatches, getUpcomingMatches, getCompletedMatches };
+  return {
+    matches,
+    isLoadingMatches,
+    addMatch,
+    updateMatch,
+    deleteMatch,
+    configurePitch,
+    syncPitchConfig,
+    refreshMatches,
+    getMatchById,
+    getLiveMatches,
+    getUpcomingMatches,
+    getCompletedMatches,
+  };
 });

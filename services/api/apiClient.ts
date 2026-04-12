@@ -39,6 +39,18 @@ class ApiClient {
     return Array.from(new Set(candidates.filter(Boolean)));
   }
 
+  /**
+   * Large multipart uploads (video analysis) often fail on ngrok free tier (ERR_NGROK_3004).
+   * When `EXPO_PUBLIC_LAN_API_BASE_URL` is set, try it first on native so the phone hits the PC on LAN.
+   */
+  private get uploadBaseURLs(): string[] {
+    const standard = this.baseURLs;
+    if (API_CONFIG.LAN_URL && Platform.OS !== "web") {
+      return Array.from(new Set([API_CONFIG.LAN_URL, ...standard]));
+    }
+    return standard;
+  }
+
   private async parseApiResponse<T>(res: Response): Promise<ApiResponse<T>> {
     const raw = await res.text();
     const contentType = res.headers.get("content-type") || "";
@@ -240,16 +252,22 @@ class ApiClient {
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
     let lastError: any = null;
+    const bases = this.uploadBaseURLs;
+    const uploadTimeout = API_CONFIG.UPLOAD_TIMEOUT_MS;
 
-    for (const baseURL of this.baseURLs) {
+    for (const baseURL of bases) {
       const url = `${baseURL}${endpoint}`;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), uploadTimeout);
       try {
         console.log("[ApiClient][upload] try", { endpoint, baseURL });
         const res = await fetch(url, {
           method: "POST",
           headers,
           body: formData,
+          signal: controller.signal,
         });
+        clearTimeout(timer);
         const json = await this.parseApiResponse<T>(res);
         if (!res.ok)
           throw {
@@ -268,14 +286,23 @@ class ApiClient {
         console.log("[ApiClient][upload] success", { endpoint, baseURL });
         return json as ApiResponse<T>;
       } catch (err: any) {
+        clearTimeout(timer);
         lastError = err;
+        if (err?.name === "AbortError") {
+          lastError = {
+            status: "error",
+            data: null,
+            message: "Upload timed out",
+            baseURL,
+          };
+        }
         console.log("[ApiClient][upload] failed", {
           endpoint,
           baseURL,
           message: lastError?.message,
         });
         if (
-          baseURL !== this.baseURLs[this.baseURLs.length - 1] &&
+          baseURL !== bases[bases.length - 1] &&
           this.shouldRetryOnFallback(lastError)
         ) {
           continue;

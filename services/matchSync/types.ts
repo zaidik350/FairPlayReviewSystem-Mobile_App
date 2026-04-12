@@ -60,12 +60,14 @@ export interface MatchLiveState {
 export interface ReviewRealtimeRow {
   id: number;
   match_id: number;
+  match_name?: string | null;
   over: string | null;
   original_decision: OriginalDecision | null;
   decision: OriginalDecision | null;
   impact: string | null;
   pitch: string | null;
   wickets: string | null;
+  video_uri?: string | null;
   created_at: string | null;
 }
 

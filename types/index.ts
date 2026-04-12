@@ -18,7 +18,7 @@ export interface Match {
   teams: string;
   venue: string;
   date: string;
-  status: 'upcoming' | 'live' | 'completed';
+  status: "upcoming" | "live" | "completed";
   pitchConfigured?: boolean;
   pitchImageUri?: string;
 }
@@ -28,16 +28,16 @@ export interface Review {
   matchId: string;
   matchName: string;
   over: string;
-  originalDecision: 'OUT' | 'NOT OUT';
-  decision: 'OUT' | 'NOT OUT';
-  impact: 'In-line' | 'Outside';
-  pitch: 'In-line' | 'Outside';
-  wickets: 'Hitting' | 'Missing';
+  originalDecision: "OUT" | "NOT OUT";
+  decision: "OUT" | "NOT OUT";
+  impact: "In-line" | "Outside";
+  pitch: "In-line" | "Outside";
+  wickets: "Hitting" | "Missing";
   videoUri: string;
   timestamp: string;
 }
 
-export type DecisionType = 'OUT' | 'NOT OUT';
-export type ImpactType = 'In-line' | 'Outside';
-export type PitchType = 'In-line' | 'Outside';
-export type WicketsType = 'Hitting' | 'Missing';
+export type DecisionType = "OUT" | "NOT OUT";
+export type ImpactType = "In-line" | "Outside";
+export type PitchType = "In-line" | "Outside";
+export type WicketsType = "Hitting" | "Missing";
