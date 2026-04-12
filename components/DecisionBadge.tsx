@@ -1,21 +1,24 @@
-import Colors from '@/constants/colors';
-import { DecisionType } from '@/types';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import Colors from "@/constants/colors";
+import { DecisionType } from "@/types";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 interface DecisionBadgeProps {
   decision: DecisionType;
-  size?: 'small' | 'medium' | 'large';
+  size?: "small" | "medium" | "large";
 }
 
-export default function DecisionBadge({ decision, size = 'medium' }: DecisionBadgeProps) {
-  const isOut = decision === 'OUT';
-  
+export default function DecisionBadge({
+  decision,
+  size = "medium",
+}: DecisionBadgeProps) {
+  const isOut = decision === "OUT";
+
   const getSizeStyle = () => {
     switch (size) {
-      case 'small':
+      case "small":
         return styles.small;
-      case 'large':
+      case "large":
         return styles.large;
       default:
         return styles.medium;
@@ -24,9 +27,9 @@ export default function DecisionBadge({ decision, size = 'medium' }: DecisionBad
 
   const getTextStyle = () => {
     switch (size) {
-      case 'small':
+      case "small":
         return styles.smallText;
-      case 'large':
+      case "large":
         return styles.largeText;
       default:
         return styles.mediumText;
@@ -41,7 +44,13 @@ export default function DecisionBadge({ decision, size = 'medium' }: DecisionBad
         isOut ? styles.outBadge : styles.notOutBadge,
       ]}
     >
-      <Text style={[styles.text, getTextStyle(), isOut ? styles.outText : styles.notOutText]}>
+      <Text
+        style={[
+          styles.text,
+          getTextStyle(),
+          isOut ? styles.outText : styles.notOutText,
+        ]}
+      >
         {decision}
       </Text>
     </View>
@@ -51,8 +60,8 @@ export default function DecisionBadge({ decision, size = 'medium' }: DecisionBad
 const styles = StyleSheet.create({
   badge: {
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   small: {
     paddingHorizontal: 10,
@@ -69,17 +78,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   outBadge: {
-    backgroundColor: 'rgba(0, 255, 136, 0.15)',
+    backgroundColor: "rgba(0, 255, 136, 0.15)",
     borderWidth: 1,
     borderColor: Colors.out,
   },
   notOutBadge: {
-    backgroundColor: 'rgba(255, 68, 68, 0.15)',
+    backgroundColor: "rgba(255, 68, 68, 0.15)",
     borderWidth: 1,
     borderColor: Colors.notOut,
   },
   text: {
-    fontWeight: '700' as const,
+    fontWeight: "700" as const,
     letterSpacing: 1,
   },
   smallText: {

@@ -2,6 +2,7 @@ import Button from '@/components/Button';
 import Card from '@/components/Card';
 import StatCard from '@/components/StatCard';
 import ScreenContainer from '@/components/layout/ScreenContainer';
+import { ProfileStatsSkeleton } from '@/components/skeleton/ScreenSkeletons';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/context/AuthContext';
 import { useMatchContext } from '@/context/MatchContext';
@@ -32,10 +33,11 @@ import {
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { matches } = useMatchContext();
-  const { reviews, getAccuracy } = useReviewContext();
+  const { matches, isLoadingMatches } = useMatchContext();
+  const { reviews, getAccuracy, isLoadingReviews } = useReviewContext();
 
   const accuracy = getAccuracy();
+  const statsLoading = isLoadingMatches || isLoadingReviews;
 
   const handleLogout = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -104,26 +106,30 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View style={styles.statsContainer}>
-          <StatCard
-            label="Matches"
-            value={matches.length}
-            icon={<Target size={20} color={Colors.primary} />}
-            color={Colors.primary}
-          />
-          <StatCard
-            label="Reviews"
-            value={reviews.length}
-            icon={<FileCheck size={20} color={Colors.accent} />}
-            color={Colors.accent}
-          />
-          <StatCard
-            label="Accuracy"
-            value={`${accuracy}%`}
-            icon={<Trophy size={20} color={Colors.warning} />}
-            color={Colors.warning}
-          />
-        </View>
+        {statsLoading ? (
+          <ProfileStatsSkeleton />
+        ) : (
+          <View style={styles.statsContainer}>
+            <StatCard
+              label="Matches"
+              value={matches.length}
+              icon={<Target size={20} color={Colors.primary} />}
+              color={Colors.primary}
+            />
+            <StatCard
+              label="Reviews"
+              value={reviews.length}
+              icon={<FileCheck size={20} color={Colors.accent} />}
+              color={Colors.accent}
+            />
+            <StatCard
+              label="Accuracy"
+              value={`${accuracy}%`}
+              icon={<Trophy size={20} color={Colors.warning} />}
+              color={Colors.warning}
+            />
+          </View>
+        )}
 
         <Text style={styles.sectionTitle}>Settings</Text>
 

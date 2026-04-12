@@ -3,18 +3,18 @@
  * Keep these in sync with the FastAPI backend DTOs.
  */
 
-import type { DecisionType, ImpactType, PitchType, WicketsType } from './index';
+import type { DecisionType, ImpactType, PitchType, WicketsType } from "./index";
 
 /* ── Generic wrapper — matches backend response_formatter ── */
 
 export interface ApiResponse<T = unknown> {
-  status: 'success' | 'error';
+  status: "success" | "error";
   data: T;
   message?: string;
 }
 
 export interface ApiError {
-  status: 'error';
+  status: "error";
   data: null;
   message: string;
 }

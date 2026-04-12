@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 export const [ReviewProvider, useReviewContext] = createContextHook(() => {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const { isLoggedIn, isLoading } = useAuth();
 
   /* Load reviews only for authenticated user */
@@ -18,17 +19,25 @@ export const [ReviewProvider, useReviewContext] = createContextHook(() => {
     if (isLoading) return;
     if (!isLoggedIn) {
       setReviews([]);
+      setIsLoadingReviews(false);
       return;
     }
 
+    let cancelled = false;
     (async () => {
+      setIsLoadingReviews(true);
       try {
         const data = await reviewService.getAll();
-        setReviews(data);
+        if (!cancelled) setReviews(data);
       } catch (e) {
         console.log('Error loading reviews:', e);
+      } finally {
+        if (!cancelled) setIsLoadingReviews(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [isLoggedIn, isLoading]);
 
   const refreshReviews = useCallback(async () => {
@@ -51,5 +60,13 @@ export const [ReviewProvider, useReviewContext] = createContextHook(() => {
     return Math.round((correct / reviews.length) * 100);
   }, [reviews]);
 
-  return { reviews, addReview, refreshReviews, getReviewById, getReviewsByMatch, getAccuracy };
+  return {
+    reviews,
+    isLoadingReviews,
+    addReview,
+    refreshReviews,
+    getReviewById,
+    getReviewsByMatch,
+    getAccuracy,
+  };
 });

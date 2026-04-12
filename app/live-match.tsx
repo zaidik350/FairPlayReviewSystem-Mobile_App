@@ -4,6 +4,7 @@ import CameraOverlay from '@/components/camera/CameraOverlay';
 import RecordingControls from '@/components/camera/RecordingControls';
 import ReviewPromptModal from '@/components/camera/ReviewPromptModal';
 import WebCameraFallback from '@/components/camera/WebCameraFallback';
+import { LiveMatchBannerSkeleton } from '@/components/skeleton/ScreenSkeletons';
 import Colors from '@/constants/colors';
 import { useMatchContext } from '@/context/MatchContext';
 import { useCamera } from '@/hooks/useCamera';
@@ -25,7 +26,7 @@ export default function LiveMatchScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { getMatchById, updateMatch } = useMatchContext();
+  const { getMatchById, updateMatch, isLoadingMatches } = useMatchContext();
 
   const {
     cameraRef,
@@ -133,6 +134,15 @@ export default function LiveMatchScreen() {
             style={styles.backButton}
           />
         </Card>
+      </View>
+    );
+  }
+
+  if (isLoadingMatches) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <LiveMatchBannerSkeleton />
       </View>
     );
   }

@@ -1,15 +1,15 @@
-import Button from '@/components/Button';
-import Card from '@/components/Card';
-import Input from '@/components/Input';
-import ScreenContainer from '@/components/layout/ScreenContainer';
-import Colors from '@/constants/colors';
-import { useAuth } from '@/context/AuthContext';
-import { useImagePicker } from '@/hooks/useImagePicker';
-import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Stack, useRouter } from 'expo-router';
-import { Camera, Mail, Save, User } from 'lucide-react-native';
-import React, { useState } from 'react';
+import Button from "@/components/Button";
+import Card from "@/components/Card";
+import Input from "@/components/Input";
+import ScreenContainer from "@/components/layout/ScreenContainer";
+import AppColors from "@/constants/colors";
+import { useAuth } from "@/context/AuthContext";
+import { useImagePicker } from "@/hooks/useImagePicker";
+import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
+import { Stack, useRouter } from "expo-router";
+import { Camera, Mail, Save, User } from "lucide-react-native";
+import React, { useState } from "react";
 import {
   Alert,
   Image,
@@ -17,20 +17,22 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const { user, updateUser } = useAuth();
   const { pick: pickImage } = useImagePicker();
 
-  const [initialFirstName, ...restNameParts] = (user?.name || '').trim().split(/\s+/);
-  const initialLastName = restNameParts.join(' ');
+  const [initialFirstName, ...restNameParts] = (user?.name || "")
+    .trim()
+    .split(/\s+/);
+  const initialLastName = restNameParts.join(" ");
 
-  const [firstName, setFirstName] = useState(initialFirstName || '');
-  const [lastName, setLastName] = useState(initialLastName || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [avatar, setAvatar] = useState(user?.avatar || '');
+  const [firstName, setFirstName] = useState(initialFirstName || "");
+  const [lastName, setLastName] = useState(initialLastName || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [avatar, setAvatar] = useState(user?.avatar || "");
   const [saving, setSaving] = useState(false);
 
   const handlePickImage = async () => {
@@ -40,17 +42,17 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     if (!firstName.trim()) {
-      Alert.alert('Error', 'Please enter your first name.');
+      Alert.alert("Error", "Please enter your first name.");
       return;
     }
 
     if (!lastName.trim()) {
-      Alert.alert('Error', 'Please enter your last name.');
+      Alert.alert("Error", "Please enter your last name.");
       return;
     }
 
     if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email.');
+      Alert.alert("Error", "Please enter your email.");
       return;
     }
 
@@ -65,12 +67,12 @@ export default function EditProfileScreen() {
         avatar,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert('Success', 'Profile updated successfully!', [
-        { text: 'OK', onPress: () => router.back() },
+      Alert.alert("Success", "Profile updated successfully!", [
+        { text: "OK", onPress: () => router.back() },
       ]);
     } catch (error) {
-      console.log('Save error:', error);
-      Alert.alert('Error', 'Failed to save profile. Please try again.');
+      console.log("Save error:", error);
+      Alert.alert("Error", "Failed to save profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -80,73 +82,78 @@ export default function EditProfileScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'Edit Profile',
-          headerStyle: { backgroundColor: Colors.background },
-          headerTintColor: Colors.text,
+          title: "Edit Profile",
+          headerStyle: { backgroundColor: AppColors.background },
+          headerTintColor: AppColors.text,
           headerShadowVisible: false,
         }}
       />
       <ScreenContainer contentStyle={styles.content}>
-          <View style={styles.avatarSection}>
-            <TouchableOpacity onPress={handlePickImage} style={styles.avatarContainer}>
-              <LinearGradient
-                colors={[Colors.primary, Colors.primaryDim]}
-                style={styles.avatarRing}
-              >
-                <View style={styles.avatarInner}>
-                  {avatar ? (
-                    <Image source={{ uri: avatar }} style={styles.avatarImage} />
-                  ) : (
-                    <Text style={styles.avatarText}>
-                      {firstName?.charAt(0).toUpperCase() || lastName?.charAt(0).toUpperCase() || 'U'}
-                    </Text>
-                  )}
-                </View>
-              </LinearGradient>
-              <View style={styles.cameraButton}>
-                <Camera size={16} color={Colors.background} />
+        <View style={styles.avatarSection}>
+          <TouchableOpacity
+            onPress={handlePickImage}
+            style={styles.avatarContainer}
+          >
+            <LinearGradient
+              colors={[AppColors.primary, AppColors.primaryDim]}
+              style={styles.avatarRing}
+            >
+              <View style={styles.avatarInner}>
+                {avatar ? (
+                  <Image source={{ uri: avatar }} style={styles.avatarImage} />
+                ) : (
+                  <Text style={styles.avatarText}>
+                    {firstName?.charAt(0).toUpperCase() ||
+                      lastName?.charAt(0).toUpperCase() ||
+                      "U"}
+                  </Text>
+                )}
               </View>
-            </TouchableOpacity>
-            <Text style={styles.uploadHint}>Tap to change photo</Text>
-          </View>
+            </LinearGradient>
+            <View style={styles.cameraButton}>
+              <Camera size={16} color={AppColors.background} />
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.uploadHint}>Tap to change photo</Text>
+        </View>
 
-          <Card style={styles.formCard}>
-            <Input
-              label="First Name"
-              value={firstName}
-              onChangeText={setFirstName}
-              placeholder="Enter your first name"
-              autoCapitalize="words"
-              icon={<User size={20} color={Colors.textMuted} />}
-            />
-
-            <Input
-              label="Last Name"
-              value={lastName}
-              onChangeText={setLastName}
-              placeholder="Enter your last name"
-              autoCapitalize="words"
-              icon={<User size={20} color={Colors.textMuted} />}
-            />
-
-            <Input
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              icon={<Mail size={20} color={Colors.textMuted} />}
-            />
-          </Card>
-
-          <Button
-            title="Save Changes"
-            onPress={handleSave}
-            loading={saving}
-            icon={<Save size={18} color={Colors.background} />}
-            style={styles.saveButton}
+        <Card style={styles.formCard}>
+          <Input
+            label="First Name"
+            value={firstName}
+            onChangeText={setFirstName}
+            placeholder="Enter your first name"
+            autoCapitalize="words"
+            icon={<User size={20} color={AppColors.textMuted} />}
           />
+
+          <Input
+            label="Last Name"
+            value={lastName}
+            onChangeText={setLastName}
+            placeholder="Enter your last name"
+            autoCapitalize="words"
+            icon={<User size={20} color={AppColors.textMuted} />}
+          />
+
+          <Input
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Enter your email"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            icon={<Mail size={20} color={AppColors.textMuted} />}
+          />
+        </Card>
+
+        <Button
+          title="Save Changes"
+          onPress={handleSave}
+          loading={saving}
+          icon={<Save size={18} color={AppColors.background} />}
+          style={styles.saveButton}
+        />
       </ScreenContainer>
     </>
   );
@@ -157,11 +164,11 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   avatarSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
   },
   avatarContainer: {
-    position: 'relative',
+    position: "relative",
   },
   avatarRing: {
     width: 120,
@@ -172,37 +179,37 @@ const styles = StyleSheet.create({
   avatarInner: {
     flex: 1,
     borderRadius: 57,
-    backgroundColor: Colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    backgroundColor: AppColors.card,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   avatarImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: 57,
   },
   avatarText: {
     fontSize: 48,
-    fontWeight: '700' as const,
-    color: Colors.primary,
+    fontWeight: "700" as const,
+    color: AppColors.primary,
   },
   cameraButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 4,
     right: 4,
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: AppColors.primary,
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 3,
-    borderColor: Colors.background,
+    borderColor: AppColors.background,
   },
   uploadHint: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: AppColors.textSecondary,
     marginTop: 12,
   },
   formCard: {

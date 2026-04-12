@@ -1,5 +1,6 @@
 import Card from '@/components/Card';
 import ScreenContainer from '@/components/layout/ScreenContainer';
+import { NotificationsSkeleton } from '@/components/skeleton/ScreenSkeletons';
 import Colors from '@/constants/colors';
 import { useNotificationContext } from '@/context/NotificationContext';
 import * as Haptics from 'expo-haptics';
@@ -14,7 +15,8 @@ import {
 } from 'react-native';
 
 export default function NotificationsScreen() {
-  const { notifications, updateNotifications } = useNotificationContext();
+  const { notifications, updateNotifications, isLoadingNotifications } =
+    useNotificationContext();
 
   const handleToggle = (key: keyof typeof notifications, value: boolean) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -56,6 +58,16 @@ export default function NotificationsScreen() {
         }}
       />
       <ScreenContainer contentStyle={styles.content}>
+          {isLoadingNotifications ? (
+            <>
+              <NotificationsSkeleton />
+              <Text style={styles.footerText}>
+                You can change these preferences at any time. Some notifications may
+                still be sent for important account and security updates.
+              </Text>
+            </>
+          ) : (
+            <>
           <View style={styles.headerSection}>
             <View style={styles.iconContainer}>
               <Bell size={32} color={Colors.primary} />
@@ -94,6 +106,8 @@ export default function NotificationsScreen() {
             You can change these preferences at any time. Some notifications may
             still be sent for important account and security updates.
           </Text>
+            </>
+          )}
       </ScreenContainer>
     </>
   );

@@ -52,6 +52,7 @@ export function useApp() {
     updateUser: auth.updateUser,
     // Matches
     matches: match.matches,
+    isLoadingMatches: match.isLoadingMatches,
     addMatch: match.addMatch,
     updateMatch: match.updateMatch,
     getMatchById: match.getMatchById,
@@ -60,12 +61,14 @@ export function useApp() {
     getCompletedMatches: match.getCompletedMatches,
     // Reviews
     reviews: review.reviews,
+    isLoadingReviews: review.isLoadingReviews,
     addReview: review.addReview,
     getReviewById: review.getReviewById,
     getReviewsByMatch: review.getReviewsByMatch,
     getAccuracy: review.getAccuracy,
     // Notifications
     notifications: notification.notifications,
+    isLoadingNotifications: notification.isLoadingNotifications,
     updateNotifications: notification.updateNotifications,
   };
 }

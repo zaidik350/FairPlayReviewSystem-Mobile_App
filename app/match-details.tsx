@@ -1,18 +1,28 @@
-import Button from '@/components/Button';
-import Card from '@/components/Card';
-import Input from '@/components/Input';
-import ScreenContainer from '@/components/layout/ScreenContainer';
-import PitchConfigModal from '@/components/match/PitchConfigModal';
-import ReviewCard from '@/components/ReviewCard';
-import Colors from '@/constants/colors';
-import { useMatchContext } from '@/context/MatchContext';
-import { useReviewContext } from '@/context/ReviewContext';
-import type { Review } from '@/types';
-import { getStatusColor } from '@/utils/matchHelpers';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Calendar, Clock3, FileText, MapPin, Play, Users } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import Button from "@/components/Button";
+import Card from "@/components/Card";
+import Input from "@/components/Input";
+import ScreenContainer from "@/components/layout/ScreenContainer";
+import PitchConfigModal from "@/components/match/PitchConfigModal";
+import { MatchDetailSkeleton } from "@/components/skeleton/ScreenSkeletons";
+import ReviewCard from "@/components/ReviewCard";
+import AppColors from "@/constants/colors";
+import { useMatchContext } from "@/context/MatchContext";
+import { useReviewContext } from "@/context/ReviewContext";
+import type { Review } from "@/types";
+import { getStatusColor } from "@/utils/matchHelpers";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  Calendar,
+  Clock3,
+  FileText,
+  MapPin,
+  Play,
+  Users,
+} from "lucide-react-native";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Platform,
@@ -20,17 +30,23 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
+
+const Colors = AppColors;
 
 export default function MatchDetailsScreen() {
-  const { id, openPitchConfig } = useLocalSearchParams<{ id: string; openPitchConfig?: string }>();
+  const { id, openPitchConfig } = useLocalSearchParams<{
+    id: string;
+    openPitchConfig?: string;
+  }>();
   const router = useRouter();
-  const { getMatchById, updateMatch, deleteMatch, syncPitchConfig } = useMatchContext();
+  const { getMatchById, updateMatch, deleteMatch, syncPitchConfig, isLoadingMatches } =
+    useMatchContext();
   const { getReviewsByMatch } = useReviewContext();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState('');
-  const [teams, setTeams] = useState('');
-  const [venue, setVenue] = useState('');
+  const [name, setName] = useState("");
+  const [teams, setTeams] = useState("");
+  const [venue, setVenue] = useState("");
   const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -39,25 +55,25 @@ export default function MatchDetailsScreen() {
   const [showPitchConfigModal, setShowPitchConfigModal] = useState(false);
   const [pitchConfigMandatory, setPitchConfigMandatory] = useState(false);
 
-  const match = getMatchById(id || '');
-  const matchReviews = getReviewsByMatch(id || '');
+  const match = getMatchById(id || "");
+  const matchReviews = getReviewsByMatch(id || "");
 
   const formatDateTime = (value: Date) => {
-    const datePart = value.toLocaleDateString('en-US', {
-      month: 'short',
-      day: '2-digit',
-      year: 'numeric',
+    const datePart = value.toLocaleDateString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
     });
-    const timePart = value.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
+    const timePart = value.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: true,
     });
     return `${datePart} - ${timePart}`;
   };
 
   const parseDateTime = (value: string): Date | null => {
-    const parsed = new Date(value.replace(' - ', ' '));
+    const parsed = new Date(value.replace(" - ", " "));
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   };
 
@@ -77,8 +93,8 @@ export default function MatchDetailsScreen() {
   };
 
   const onDateChange = (event: DateTimePickerEvent, picked?: Date) => {
-    if (Platform.OS === 'android') setShowDatePicker(false);
-    if (event.type !== 'set' || !picked) return;
+    if (Platform.OS === "android") setShowDatePicker(false);
+    if (event.type !== "set" || !picked) return;
 
     const next = selectedDateTime ? new Date(selectedDateTime) : new Date();
     next.setFullYear(picked.getFullYear(), picked.getMonth(), picked.getDate());
@@ -86,8 +102,8 @@ export default function MatchDetailsScreen() {
   };
 
   const onTimeChange = (event: DateTimePickerEvent, picked?: Date) => {
-    if (Platform.OS === 'android') setShowTimePicker(false);
-    if (event.type !== 'set' || !picked) return;
+    if (Platform.OS === "android") setShowTimePicker(false);
+    if (event.type !== "set" || !picked) return;
 
     const next = selectedDateTime ? new Date(selectedDateTime) : new Date();
     next.setHours(picked.getHours(), picked.getMinutes(), 0, 0);
@@ -95,12 +111,20 @@ export default function MatchDetailsScreen() {
   };
 
   const dateLabel = selectedDateTime
-    ? selectedDateTime.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
-    : 'Select date';
+    ? selectedDateTime.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      })
+    : "Select date";
 
   const timeLabel = selectedDateTime
-    ? selectedDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-    : 'Select time';
+    ? selectedDateTime.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "Select time";
 
   useEffect(() => {
     if (!match) return;
@@ -108,15 +132,33 @@ export default function MatchDetailsScreen() {
     setTeams(match.teams);
     setVenue(match.venue);
     setSelectedDateTime(parseDateTime(match.date));
-  }, [match?.id, match?.name, match?.teams, match?.venue, match?.date]);
+  }, [match]);
 
   useEffect(() => {
     if (!match) return;
-    if (openPitchConfig === '1') {
+    if (openPitchConfig === "1") {
       setPitchConfigMandatory(false);
       setShowPitchConfigModal(true);
     }
-  }, [openPitchConfig, match?.id]);
+  }, [match, openPitchConfig]);
+
+  if (isLoadingMatches) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: "Match Details",
+            headerStyle: { backgroundColor: Colors.background },
+            headerTintColor: Colors.text,
+            headerShadowVisible: false,
+          }}
+        />
+        <ScreenContainer paddingBottom={100} contentStyle={styles.content}>
+          <MatchDetailSkeleton />
+        </ScreenContainer>
+      </>
+    );
+  }
 
   if (!match) {
     return (
@@ -127,13 +169,16 @@ export default function MatchDetailsScreen() {
   }
 
   const startMatch = async () => {
-    await updateMatch(match.id, { status: 'live' });
-    router.push(`/live-match?id=${match.id}`);
+    await updateMatch(match.id, { status: "live" });
+    router.push(`/match-mode?id=${match.id}`);
   };
 
   const handleStartMatch = async () => {
-    if (match.status === 'completed') {
-      Alert.alert('Match Completed', 'This match is already completed and cannot be started again.');
+    if (match.status === "completed") {
+      Alert.alert(
+        "Match Completed",
+        "This match is already completed and cannot be started again.",
+      );
       return;
     }
 
@@ -142,8 +187,8 @@ export default function MatchDetailsScreen() {
       setPitchConfigMandatory(true);
       setShowPitchConfigModal(true);
       Alert.alert(
-        'Wicket Configuration Required',
-        'Please configure wicket before starting this match.'
+        "Wicket Configuration Required",
+        "Please configure wicket before starting this match.",
       );
       return;
     }
@@ -152,14 +197,14 @@ export default function MatchDetailsScreen() {
   };
 
   const handleSaveChanges = async () => {
-    if (match.status === 'completed') {
-      Alert.alert('Match Completed', 'Completed matches cannot be edited.');
+    if (match.status === "completed") {
+      Alert.alert("Match Completed", "Completed matches cannot be edited.");
       setIsEditing(false);
       return;
     }
 
     if (!name.trim() || !teams.trim() || !venue.trim() || !selectedDateTime) {
-      Alert.alert('Error', 'Please fill in all fields before saving.');
+      Alert.alert("Error", "Please fill in all fields before saving.");
       return;
     }
 
@@ -172,43 +217,43 @@ export default function MatchDetailsScreen() {
         date: formatDateTime(selectedDateTime),
       });
       setIsEditing(false);
-      Alert.alert('Success', 'Match updated successfully.');
+      Alert.alert("Success", "Match updated successfully.");
     } catch (error) {
-      console.log('[MatchDetails][handleSaveChanges] error:', error);
-      Alert.alert('Error', 'Failed to update match. Please try again.');
+      console.log("[MatchDetails][handleSaveChanges] error:", error);
+      Alert.alert("Error", "Failed to update match. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteMatch = () => {
-    if (match.status === 'completed') {
-      Alert.alert('Match Completed', 'Completed matches cannot be deleted.');
+    if (match.status === "completed") {
+      Alert.alert("Match Completed", "Completed matches cannot be deleted.");
       return;
     }
 
     Alert.alert(
-      'Delete Match',
-      'Are you sure you want to delete this match? This action cannot be undone.',
+      "Delete Match",
+      "Are you sure you want to delete this match? This action cannot be undone.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Delete',
-          style: 'destructive',
+          text: "Delete",
+          style: "destructive",
           onPress: async () => {
             setDeleting(true);
             try {
               await deleteMatch(match.id);
-              router.replace('/(tabs)/matches');
+              router.replace("/(tabs)/matches");
             } catch (error) {
-              console.log('[MatchDetails][handleDeleteMatch] error:', error);
-              Alert.alert('Error', 'Failed to delete match. Please try again.');
+              console.log("[MatchDetails][handleDeleteMatch] error:", error);
+              Alert.alert("Error", "Failed to delete match. Please try again.");
             } finally {
               setDeleting(false);
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -216,200 +261,244 @@ export default function MatchDetailsScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'Match Details',
+          title: "Match Details",
           headerStyle: { backgroundColor: Colors.background },
           headerTintColor: Colors.text,
           headerShadowVisible: false,
         }}
       />
       <ScreenContainer paddingBottom={100} contentStyle={styles.content}>
-          <Card variant="elevated" style={styles.matchCard}>
-            <View style={styles.statusContainer}>
-              <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(match.status)}20` }]}>
-                {match.status === 'live' && <View style={[styles.statusDot, { backgroundColor: getStatusColor(match.status) }]} />}
-                <Text style={[styles.statusText, { color: getStatusColor(match.status) }]}>
-                  {match.status.toUpperCase()}
+        <Card variant="elevated" style={styles.matchCard}>
+          <View style={styles.statusContainer}>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: `${getStatusColor(match.status)}20` },
+              ]}
+            >
+              {match.status === "live" && (
+                <View
+                  style={[
+                    styles.statusDot,
+                    { backgroundColor: getStatusColor(match.status) },
+                  ]}
+                />
+              )}
+              <Text
+                style={[
+                  styles.statusText,
+                  { color: getStatusColor(match.status) },
+                ]}
+              >
+                {match.status.toUpperCase()}
+              </Text>
+            </View>
+          </View>
+
+          {isEditing ? (
+            <View style={styles.editForm}>
+              <Input
+                label="Match Name"
+                value={name}
+                onChangeText={setName}
+                onFocus={closePickers}
+                placeholder="Enter match name"
+                icon={<FileText size={18} color={Colors.textSecondary} />}
+              />
+
+              <Input
+                label="Teams"
+                value={teams}
+                onChangeText={setTeams}
+                onFocus={closePickers}
+                placeholder="e.g., Team A vs Team B"
+                icon={<Users size={18} color={Colors.textSecondary} />}
+              />
+
+              <Input
+                label="Venue"
+                value={venue}
+                onChangeText={setVenue}
+                onFocus={closePickers}
+                placeholder="Enter venue"
+                icon={<MapPin size={18} color={Colors.textSecondary} />}
+              />
+
+              <Text style={styles.label}>Date & Time</Text>
+              <View style={styles.dateTimeRow}>
+                <TouchableOpacity
+                  onPress={openDatePicker}
+                  style={styles.dateTimeButton}
+                  activeOpacity={0.85}
+                >
+                  <Calendar size={18} color={Colors.textSecondary} />
+                  <Text style={styles.dateTimeText}>{dateLabel}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={openTimePicker}
+                  style={styles.dateTimeButton}
+                  activeOpacity={0.85}
+                >
+                  <Clock3 size={18} color={Colors.textSecondary} />
+                  <Text style={styles.dateTimeText}>{timeLabel}</Text>
+                </TouchableOpacity>
+              </View>
+
+              {selectedDateTime ? (
+                <Text style={styles.selectedDateTime}>
+                  Selected: {formatDateTime(selectedDateTime)}
                 </Text>
+              ) : null}
+
+              {showDatePicker ? (
+                <DateTimePicker
+                  value={selectedDateTime ?? new Date()}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={onDateChange}
+                  minimumDate={new Date()}
+                />
+              ) : null}
+
+              {showTimePicker ? (
+                <DateTimePicker
+                  value={selectedDateTime ?? new Date()}
+                  mode="time"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={onTimeChange}
+                />
+              ) : null}
+
+              <View style={styles.actionRow}>
+                <Button
+                  title="Cancel"
+                  onPress={() => {
+                    setIsEditing(false);
+                    closePickers();
+                    setName(match.name);
+                    setTeams(match.teams);
+                    setVenue(match.venue);
+                    setSelectedDateTime(parseDateTime(match.date));
+                  }}
+                  variant="outline"
+                  style={styles.actionButton}
+                />
+                <Button
+                  title="Save"
+                  onPress={handleSaveChanges}
+                  loading={saving}
+                  style={styles.actionButton}
+                />
               </View>
             </View>
+          ) : (
+            <>
+              <Text style={styles.matchName}>{match.name}</Text>
 
-            {isEditing ? (
-              <View style={styles.editForm}>
-                <Input
-                  label="Match Name"
-                  value={name}
-                  onChangeText={setName}
-                  onFocus={closePickers}
-                  placeholder="Enter match name"
-                  icon={<FileText size={18} color={Colors.textSecondary} />}
-                />
+              <View style={styles.infoRow}>
+                <Users size={18} color={Colors.textSecondary} />
+                <Text style={styles.infoText}>{match.teams}</Text>
+              </View>
 
-                <Input
-                  label="Teams"
-                  value={teams}
-                  onChangeText={setTeams}
-                  onFocus={closePickers}
-                  placeholder="e.g., Team A vs Team B"
-                  icon={<Users size={18} color={Colors.textSecondary} />}
-                />
+              <View style={styles.infoRow}>
+                <MapPin size={18} color={Colors.textSecondary} />
+                <Text style={styles.infoText}>{match.venue}</Text>
+              </View>
 
-                <Input
-                  label="Venue"
-                  value={venue}
-                  onChangeText={setVenue}
-                  onFocus={closePickers}
-                  placeholder="Enter venue"
-                  icon={<MapPin size={18} color={Colors.textSecondary} />}
-                />
+              <View style={styles.infoRow}>
+                <Calendar size={18} color={Colors.textSecondary} />
+                <Text style={styles.infoText}>{match.date}</Text>
+              </View>
 
-                <Text style={styles.label}>Date & Time</Text>
-                <View style={styles.dateTimeRow}>
-                  <TouchableOpacity
-                    onPress={openDatePicker}
-                    style={styles.dateTimeButton}
-                    activeOpacity={0.85}
-                  >
-                    <Calendar size={18} color={Colors.textSecondary} />
-                    <Text style={styles.dateTimeText}>{dateLabel}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={openTimePicker}
-                    style={styles.dateTimeButton}
-                    activeOpacity={0.85}
-                  >
-                    <Clock3 size={18} color={Colors.textSecondary} />
-                    <Text style={styles.dateTimeText}>{timeLabel}</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {selectedDateTime ? (
-                  <Text style={styles.selectedDateTime}>Selected: {formatDateTime(selectedDateTime)}</Text>
-                ) : null}
-
-                {showDatePicker ? (
-                  <DateTimePicker
-                    value={selectedDateTime ?? new Date()}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={onDateChange}
-                    minimumDate={new Date()}
-                  />
-                ) : null}
-
-                {showTimePicker ? (
-                  <DateTimePicker
-                    value={selectedDateTime ?? new Date()}
-                    mode="time"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={onTimeChange}
-                  />
-                ) : null}
-
-                <View style={styles.actionRow}>
-                  <Button
-                    title="Cancel"
-                    onPress={() => {
-                      setIsEditing(false);
-                      closePickers();
-                      setName(match.name);
-                      setTeams(match.teams);
-                      setVenue(match.venue);
-                      setSelectedDateTime(parseDateTime(match.date));
-                    }}
-                    variant="outline"
-                    style={styles.actionButton}
-                  />
-                  <Button
-                    title="Save"
-                    onPress={handleSaveChanges}
-                    loading={saving}
-                    style={styles.actionButton}
-                  />
+              <View style={styles.pitchConfigRow}>
+                <Text style={styles.pitchConfigLabel}>Wicket Config</Text>
+                <View
+                  style={[
+                    styles.pitchConfigBadge,
+                    match.pitchConfigured
+                      ? styles.pitchConfigDone
+                      : styles.pitchConfigPending,
+                  ]}
+                >
+                  <Text style={styles.pitchConfigText}>
+                    {match.pitchConfigured ? "Configured" : "Pending"}
+                  </Text>
                 </View>
               </View>
-            ) : (
-              <>
-                <Text style={styles.matchName}>{match.name}</Text>
 
-                <View style={styles.infoRow}>
-                  <Users size={18} color={Colors.textSecondary} />
-                  <Text style={styles.infoText}>{match.teams}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                  <MapPin size={18} color={Colors.textSecondary} />
-                  <Text style={styles.infoText}>{match.venue}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                  <Calendar size={18} color={Colors.textSecondary} />
-                  <Text style={styles.infoText}>{match.date}</Text>
-                </View>
-
-                <View style={styles.pitchConfigRow}>
-                  <Text style={styles.pitchConfigLabel}>Wicket Config</Text>
-                  <View style={[styles.pitchConfigBadge, match.pitchConfigured ? styles.pitchConfigDone : styles.pitchConfigPending]}>
-                    <Text style={styles.pitchConfigText}>{match.pitchConfigured ? 'Configured' : 'Pending'}</Text>
-                  </View>
-                </View>
-
-                {match.status !== 'completed' && (
-                  <Button
-                    title={match.pitchConfigured ? 'Update Wicket Config' : 'Configure Wicket'}
-                    onPress={() => {
-                      setPitchConfigMandatory(false);
-                      setShowPitchConfigModal(true);
-                    }}
-                    variant="outline"
-                    style={styles.pitchConfigButton}
-                  />
-                )}
-
-                {match.status !== 'completed' ? (
-                  <View style={styles.actionRow}>
-                    <Button
-                      title="Edit Match"
-                      onPress={() => setIsEditing(true)}
-                      variant="outline"
-                      style={styles.actionButton}
-                    />
-                    <Button
-                      title="Delete Match"
-                      onPress={handleDeleteMatch}
-                      loading={deleting}
-                      variant="destructive"
-                      style={styles.actionButton}
-                    />
-                  </View>
-                ) : (
-                  <Text style={styles.completedNote}>Completed matches cannot be edited or deleted.</Text>
-                )}
-
-                {match.status !== 'completed' && (
-                  <Button
-                    title={match.status === 'live' ? 'Continue Match' : 'Start Match'}
-                    onPress={handleStartMatch}
-                    style={styles.startButton}
-                    icon={<Play size={18} color={Colors.background} fill={Colors.background} />}
-                  />
-                )}
-              </>
-            )}
-          </Card>
-
-          {matchReviews.length > 0 && (
-            <>
-              <Text style={styles.sectionTitle}>Match Reviews ({matchReviews.length})</Text>
-              {matchReviews.map((review: Review) => (
-                <ReviewCard
-                  key={review.id}
-                  review={review}
-                  onPress={() => router.push(`/review-detail?id=${review.id}`)}
+              {match.status !== "completed" && (
+                <Button
+                  title={
+                    match.pitchConfigured
+                      ? "Update Wicket Config"
+                      : "Configure Wicket"
+                  }
+                  onPress={() => {
+                    setPitchConfigMandatory(false);
+                    setShowPitchConfigModal(true);
+                  }}
+                  variant="outline"
+                  style={styles.pitchConfigButton}
                 />
-              ))}
+              )}
+
+              {match.status !== "completed" ? (
+                <View style={styles.actionRow}>
+                  <Button
+                    title="Edit Match"
+                    onPress={() => setIsEditing(true)}
+                    variant="outline"
+                    style={styles.actionButton}
+                  />
+                  <Button
+                    title="Delete Match"
+                    onPress={handleDeleteMatch}
+                    loading={deleting}
+                    variant="destructive"
+                    style={styles.actionButton}
+                  />
+                </View>
+              ) : (
+                <Text style={styles.completedNote}>
+                  Completed matches cannot be edited or deleted.
+                </Text>
+              )}
+
+              {match.status !== "completed" && (
+                <Button
+                  title={
+                    match.status === "live" ? "Continue Match" : "Start Match"
+                  }
+                  onPress={handleStartMatch}
+                  style={styles.startButton}
+                  icon={
+                    <Play
+                      size={18}
+                      color={Colors.background}
+                      fill={Colors.background}
+                    />
+                  }
+                />
+              )}
             </>
           )}
+        </Card>
+
+        {matchReviews.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>
+              Match Reviews ({matchReviews.length})
+            </Text>
+            {matchReviews.map((review: Review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                onPress={() => router.push(`/review-detail?id=${review.id}`)}
+              />
+            ))}
+          </>
+        )}
       </ScreenContainer>
 
       <PitchConfigModal
@@ -419,16 +508,19 @@ export default function MatchDetailsScreen() {
         onClose={() => {
           setShowPitchConfigModal(false);
           setPitchConfigMandatory(false);
-          if (openPitchConfig === '1') {
+          if (openPitchConfig === "1") {
             router.back();
           }
         }}
         onConfigured={async () => {
           setShowPitchConfigModal(false);
-          if (pitchConfigMandatory && match.status !== 'live') {
+          if (pitchConfigMandatory && match.status !== "live") {
             const latest = await syncPitchConfig(match.id);
             if (!latest?.pitchConfigured) {
-              Alert.alert('Configuration Pending', 'Pitch is not configured yet. Please retake the photo.');
+              Alert.alert(
+                "Configuration Pending",
+                "Pitch is not configured yet. Please retake the photo.",
+              );
               setShowPitchConfigModal(true);
               return;
             }
@@ -436,7 +528,7 @@ export default function MatchDetailsScreen() {
             await startMatch();
             return;
           }
-          if (openPitchConfig === '1') {
+          if (openPitchConfig === "1") {
             router.back();
           }
         }}
@@ -451,8 +543,8 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: Colors.background,
   },
   errorText: {
@@ -467,9 +559,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -482,12 +574,12 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '700' as const,
+    fontWeight: "700" as const,
     letterSpacing: 0.5,
   },
   matchName: {
     fontSize: 22,
-    fontWeight: '700' as const,
+    fontWeight: "700" as const,
     color: Colors.text,
     marginBottom: 16,
   },
@@ -497,18 +589,18 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.text,
     fontSize: 14,
-    fontWeight: '500' as const,
+    fontWeight: "500" as const,
     marginBottom: 8,
   },
   dateTimeRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
     marginBottom: 8,
   },
   dateTimeButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     backgroundColor: Colors.inputBackground,
     borderRadius: 12,
@@ -527,8 +619,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     marginBottom: 12,
   },
@@ -538,16 +630,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pitchConfigRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: 8,
     marginBottom: 8,
   },
   pitchConfigLabel: {
     fontSize: 14,
     color: Colors.textSecondary,
-    fontWeight: '600' as const,
+    fontWeight: "600" as const,
   },
   pitchConfigBadge: {
     borderRadius: 14,
@@ -555,15 +647,15 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   pitchConfigDone: {
-    backgroundColor: 'rgba(0, 255, 136, 0.15)',
+    backgroundColor: "rgba(0, 255, 136, 0.15)",
   },
   pitchConfigPending: {
-    backgroundColor: 'rgba(255, 184, 0, 0.15)',
+    backgroundColor: "rgba(255, 184, 0, 0.15)",
   },
   pitchConfigText: {
     fontSize: 12,
     color: Colors.text,
-    fontWeight: '700' as const,
+    fontWeight: "700" as const,
   },
   pitchConfigButton: {
     marginTop: 6,
@@ -572,7 +664,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   actionRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
     marginTop: 12,
   },
@@ -583,11 +675,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     color: Colors.textMuted,
     fontSize: 13,
-    textAlign: 'center',
+    textAlign: "center",
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600' as const,
+    fontWeight: "600" as const,
     color: Colors.text,
     marginBottom: 16,
   },
